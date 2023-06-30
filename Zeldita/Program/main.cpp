@@ -15,8 +15,8 @@ void Play()
 	GetWindowRect(console, &ConsoleRect);
 
 	MoveWindow(console, ConsoleRect.left, ConsoleRect.top, 1280, 720, TRUE);*/
-
 	SetConsoleDisplayMode(GetStdHandle(STD_OUTPUT_HANDLE), CONSOLE_FULLSCREEN_MODE, 0);
+	ShowScrollBar(GetConsoleWindow(), SB_BOTH, FALSE);
 	GameLoop();
 }
 
