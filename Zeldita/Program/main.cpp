@@ -1,4 +1,4 @@
-#include "Game.h"
+﻿#include "Game.h"
 void main()
 {
 	Play();
@@ -15,7 +15,8 @@ void Play()
 	GetWindowRect(console, &ConsoleRect);
 
 	MoveWindow(console, ConsoleRect.left, ConsoleRect.top, 1280, 720, TRUE);*/
-	SetConsoleDisplayMode(GetStdHandle(STD_OUTPUT_HANDLE), CONSOLE_FULLSCREEN_MODE, 0);
+	ShowWindow(console, SW_SHOWMAXIMIZED);
+	//SetConsoleDisplayMode(GetStdHandle(STD_OUTPUT_HANDLE), CONSOLE_FULLSCREEN_MODE, 0);
 	ShowScrollBar(GetConsoleWindow(), SB_BOTH, FALSE);
 	GameLoop();
 }
@@ -37,7 +38,7 @@ void GameLoop()
 			Menu(gd);
 			break;
 		case Scenes::Game:
-
+			Game(gd);
 			break;
 		case Scenes::Credits:
 			break;
@@ -65,6 +66,9 @@ void MenuUpdate(GameData& gd)
 {
 	if (_kbhit() && gd.isMenuFirstPhase)
 		gd.isMenuFirstPhase = false;
+
+	if (!gd.isMenuFirstPhase && _getch() == '1')
+		gd.scene = Scenes::Game;
 
 }
 void MenuDraw(GameData gd)
@@ -153,7 +157,6 @@ void Game(GameData& gd)
 
 void GameStart()
 {
-
 }
 void GameUpdate()
 {
@@ -161,5 +164,48 @@ void GameUpdate()
 }
 void GameDraw()
 {
+	HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	GetConsoleScreenBufferInfo(handle, &csbi);
+	int width = csbi.srWindow.Right - csbi.srWindow.Left;
+	int height = csbi.srWindow.Bottom - csbi.srWindow.Top;
 
+	int mapWidth = 81;
+	const int MAP_HEIGHT = 25;
+	COORD coordinates;
+	coordinates.X = width / 2 - (mapWidth / 2);
+	coordinates.Y = height / 2 - (MAP_HEIGHT / 2);
+	string map[MAP_HEIGHT] = {
+	R"(#&#&&#&#&&#&#&&#&#&&#&#&&#&#&&#&#&&#@#                #@##&#&%#&#&%#&#&%#&%&%#&%&%#&%&%#&%&%)",
+	R"(#@#*##@#*##@#*##@#*##@#*##@#*##@#*##@#                #@##@#*##@#*##@#*##@#*##@#*##@#*##@#*#)",
+	R"(#&#&&#&#&&#&#&&#&#&&[   ]#&#&&.#%(@#@#                #@##&#&%#&#&%#&#&%#&%&%#&%&%#&%&%#&%&%)",
+	R"(#@#*##@#*##@#*##@#*#[   ]#@#*#.%%                     #@##@#*##@#*##@#*##@#*##@#*##@#*##@#*#)",
+	R"(#&#&&#&#&&#&#&&.#%(@                                  #@##&#&%#&#&%#&#&%#&%&%#&%&%#&%&%#&%&%)",
+	R"(#@#*##@#*##@#*#.%%                                    #@##@#*##@#*##@#*##@#*##@#*##@#*##@#*#)",
+	R"(#&#&&#&#&&.#%/@                                       #@##&#&%#&#&%#&#&%#&%&%#&%&%#&%&%#&%&%)",
+	R"(#@#*##@#*#.%%                                         #@##@#*##@#*##@#*##@#*##@#*##@#*##@#*#)",
+	R"(#&#&&.#%/@                                            #@##(#@##&#&%#&#&%#&%&%#&%&%#&%&%#&%&%)",
+	R"(#@#*#.%%                                               #@#@#&*#@#*##@#*##@#*##@#*##@#*##@#*#)",
+	R"(                                                                                            )",
+	R"(                                                                                            )",
+	R"(                                                                                            )",
+	R"(                                                                                            )",
+	R"( %                                                                                 %    %   )",
+	R"(##/#####%@                                                                        ##/####/##)",
+	R"(#&#&&#&#&&                                                                        #&%&%#&%&%)",
+	R"(#@#*##@#*#                                                                        #@#*##@#*#)",
+	R"(#&#&&#&#&&                                                                        #&%&%#&%&%)",
+	R"(#@#*##@#*#                                                                        #@#*##@#*#)",
+	R"(#&#&&#&#&&.%     %     %     %     %     %     %     %     %     %     %     %    #&%&%#&%&%)",
+	R"(#@#*##@#*###/####/####/####/####/####/####/####/####/####/####/####/###@#*##@#*#@#/####/####)",
+	R"(#&#&&#&#&&#&#&&#&#&&#&#&&#&#&&#&#&&#&#&&#&#&&#&#&%#&#&%#&#&%#&%&%#&%&%#&%&%#&%&%@##&#&&#&#&&)",
+	R"(#@#*##@#*##@#*##@#*##@#*##@#*##@#*##@#*##@#*##@#*##@#*##@#*##@#*##@#*##@#*##@#*#@#*##@#*##@#)",
+	};
+
+	for (size_t i = 0; i < MAP_HEIGHT; i++)
+	{
+		SetConsoleCursorPosition(handle, coordinates);
+		cout << map[i];
+		coordinates.Y++;
+	}
 }
