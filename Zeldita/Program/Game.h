@@ -17,6 +17,7 @@ struct GameData
 	// Global Variables
 	Scenes scene = Scenes::Menu;
 	Scenes prevScene;
+	const int ConsoleFontSize = 30;
 
 	bool enteredNewScene = false;
 	// Game
@@ -24,7 +25,7 @@ struct GameData
 };
 
 void Play();
-void GameLoop();
+void GameLoop(GameData& gd);
 
 
 void Menu(GameData& gd);
@@ -36,3 +37,7 @@ void Game(GameData& gd);
 void GameStart();
 void GameUpdate();
 void GameDraw();
+
+
+//utilities
+void SetConsoleFontSize(int size);

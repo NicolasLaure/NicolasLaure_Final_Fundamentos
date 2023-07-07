@@ -7,24 +7,20 @@ void main()
 void Play()
 {
 	srand(0);
-	ShowCursor(false);
+	GameData gd{};
+	SetConsoleFontSize(gd.ConsoleFontSize);
 
 	HWND console = GetConsoleWindow();
-
-	/*RECT ConsoleRect;
-	GetWindowRect(console, &ConsoleRect);
-
-	MoveWindow(console, ConsoleRect.left, ConsoleRect.top, 1280, 720, TRUE);*/
 	ShowWindow(console, SW_SHOWMAXIMIZED);
 	//SetConsoleDisplayMode(GetStdHandle(STD_OUTPUT_HANDLE), CONSOLE_FULLSCREEN_MODE, 0);
 	ShowScrollBar(GetConsoleWindow(), SB_BOTH, FALSE);
-	GameLoop();
+	ShowCursor(false);
+	GameLoop(gd);
 }
 
-void GameLoop()
+void GameLoop(GameData& gd)
 {
-	GameData gd{};
-
+	
 	do
 	{
 		gd.enteredNewScene = gd.scene != gd.prevScene;
@@ -170,16 +166,16 @@ void GameDraw()
 	int width = csbi.srWindow.Right - csbi.srWindow.Left;
 	int height = csbi.srWindow.Bottom - csbi.srWindow.Top;
 
-	int mapWidth = 81;
+	int mapWidth = 93;
 	const int MAP_HEIGHT = 25;
 	COORD coordinates;
 	coordinates.X = width / 2 - (mapWidth / 2);
 	coordinates.Y = height / 2 - (MAP_HEIGHT / 2);
 	string map[MAP_HEIGHT] = {
-	R"(#&#&&#&#&&#&#&&#&#&&#&#&&#&#&&#&#&&#@#                #@##&#&%#&#&%#&#&%#&%&%#&%&%#&%&%#&%&%)",
-	R"(#@#*##@#*##@#*##@#*##@#*##@#*##@#*##@#                #@##@#*##@#*##@#*##@#*##@#*##@#*##@#*#)",
-	R"(#&#&&#&#&&#&#&&#&#&&[   ]#&#&&.#%(@#@#                #@##&#&%#&#&%#&#&%#&%&%#&%&%#&%&%#&%&%)",
-	R"(#@#*##@#*##@#*##@#*#[   ]#@#*#.%%                     #@##@#*##@#*##@#*##@#*##@#*##@#*##@#*#)",
+	R"(#&#&&#&#&&#&#&&#&&#&&#&#&&#&#&&#&#&&#@#               #@##&#&%#&#&%#&#&%#&%&%#&%&%#&%&%#&%&%)",
+	R"(#@#*##@#*##@#*##@#*##@#*#@#@#*##@#*##@#               #@##@#*##@#*##@#*##@#*##@#*##@#*##@#*#)",
+	R"(#&#&&#&#&&#&#&&#&#&&[    ]#&#&&.#%(@#@#               #@##&#&%#&#&%#&#&%#&%&%#&%&%#&%&%#&%&%)",
+	R"(#@#*##@#*##@#*##@#*#[    ]#@#*#.%%                    #@##@#*##@#*##@#*##@#*##@#*##@#*##@#*#)",
 	R"(#&#&&#&#&&#&#&&.#%(@                                  #@##&#&%#&#&%#&#&%#&%&%#&%&%#&%&%#&%&%)",
 	R"(#@#*##@#*##@#*#.%%                                    #@##@#*##@#*##@#*##@#*##@#*##@#*##@#*#)",
 	R"(#&#&&#&#&&.#%/@                                       #@##&#&%#&#&%#&#&%#&%&%#&%&%#&%&%#&%&%)",
@@ -208,4 +204,17 @@ void GameDraw()
 		cout << map[i];
 		coordinates.Y++;
 	}
+}
+
+
+void SetConsoleFontSize(int size)
+{
+	static CONSOLE_FONT_INFOEX  cfi;
+	cfi.cbSize = sizeof(CONSOLE_FONT_INFOEX);
+	HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+	GetCurrentConsoleFontEx(handle, 0, &cfi);
+	cfi.FontWeight = 500;
+	cfi.dwFontSize.X = size;
+	cfi.dwFontSize.Y = size;
+	SetCurrentConsoleFontEx(handle, NULL, &cfi);
 }
