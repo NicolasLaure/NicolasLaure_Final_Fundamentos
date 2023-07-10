@@ -8,17 +8,7 @@ void Play()
 {
 	srand(0);
 	GameData gd{};
-	SetConsoleFontSize(gd.ConsoleFontSize);
-
-	HWND console = GetConsoleWindow();
-	ShowWindow(console, SW_SHOWMAXIMIZED);
-	ShowScrollBar(GetConsoleWindow(), SB_BOTH, FALSE);
-
-	CONSOLE_CURSOR_INFO CCI;
-	GetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &CCI);
-	CCI.bVisible = false;
-	SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &CCI);
-	//ShowCursor(false);
+	Initialize(gd);
 	GameLoop(gd);
 }
 
@@ -125,7 +115,7 @@ void MenuDraw(GameData& gd)
 			R"(                      =)",
 			};
 
-			for (size_t i = 0; i < LOGO_HEIGHT; i++)
+			for (int i = 0; i < LOGO_HEIGHT; i++)
 			{
 				SetConsoleCursorPosition(handle, coordinates);
 				cout << logo[i];
@@ -167,144 +157,101 @@ void Game(GameData& gd)
 void GameStart(GameData& gd)
 {
 	gd.isArtPrinted = false;
+	MapsSetup(gd.maps, gd.MAPS_QUANTITY, gd.MAP_SIZE);
+	gd.actualMap.mapGraphic = gd.maps[0].mapGraphic;
+	gd.actualMap.mapType = gd.maps[0].mapType;
+	gd.player.position = { 45, 16 };
 }
 void GameUpdate(GameData& gd)
 {
-	int mapToPrintPrevFrame = gd.mapToPrint;
+
+
+
+	Map mapPrevFrame = gd.actualMap;
 	if (_kbhit())
 	{
-		char dir = _getch();
+		ClearPreviousPlayerPos(gd);
 
-		if (gd.mapToPrint == 0)
-			SetConsoleTextAttribute(gd.handle, 233);
-		else
-			SetConsoleTextAttribute(gd.handle, 7);
-		SetConsoleCursorPosition(gd.handle, { (short)gd.player.position.x, (short)gd.player.position.y });
-		cout << ' ';
-		SetConsoleTextAttribute(gd.handle, 7);
+		char dir = _getch();
 
 		int x = gd.player.position.x;
 		int y = gd.player.position.y;
+
 		if (dir == 'w')
 		{
+			gd.player.direction == Directions::North;
 			if (!gd.mapOfTiles[y - 1][x].hasCollision)
 				gd.player.position.y--;
 			else if (gd.mapOfTiles[y - 1][x].isCaveEntrance)
 			{
-				gd.mapToPrint = 1;
-				gd.storedPosition = gd.player.position;
+				MapChange(gd, true);
 			}
-			/*else if(gd.mapOfTiles[y - 1][x].isEndOfMap)
-				gd.mapToPrint = 2;*/
+			else if (gd.mapOfTiles[y - 1][x].isEndOfMap)
+			{
+				MapChange(gd, Directions::North);
+			}
 		}
 		else if (dir == 's')
 		{
+			gd.player.direction == Directions::South;
 			if (!gd.mapOfTiles[y + 1][x].hasCollision)
 				gd.player.position.y++;
-			else if (gd.mapOfTiles[y + 1][x].isEndOfMap && gd.mapToPrint == 1)
-				gd.mapToPrint = 0;
-			/*else if(gd.mapOfTiles[y + 1][x].isEndOfMap)*/
+			else if (gd.mapOfTiles[y + 1][x].isEndOfMap)
+			{
+				MapChange(gd, Directions::South);
+			}
 		}
 		else if (dir == 'a')
 		{
+			gd.player.direction == Directions::West;
 			if (!gd.mapOfTiles[y][x - 1].hasCollision)
 				gd.player.position.x--;
+			else if (gd.mapOfTiles[y][x - 1].isEndOfMap)
+			{
+				MapChange(gd, Directions::West);
+			}
 		}
 		else if (dir == 'd')
 		{
+			gd.player.direction == Directions::East;
 			if (!gd.mapOfTiles[y][x + 1].hasCollision)
 				gd.player.position.x++;
-
+			else if (gd.mapOfTiles[y][x + 1].isEndOfMap)
+			{
+				MapChange(gd, Directions::East);
+			}
 		}
-		if (mapToPrintPrevFrame != gd.mapToPrint)
+		if (mapPrevFrame.name != gd.actualMap.name)
 			gd.isArtPrinted = false;
 	}
 }
 void GameDraw(GameData& gd)
 {
-	/*string FirstScreen[] = {
-	R"(#&#&&#&#&&#&#&&#&&#&&#&#&&#&#&&#&#&&#@#               #@##&#&%#&#&%#&#&%#&%&%#&%&%#&%&%#&%&%)",
-	R"(#@#*##@#*##@#*##@#*##@#*#@#@#*##@#*##@#               #@##@#*##@#*##@#*##@#*##@#*##@#*##@#*#)",
-	R"(#&#&&#&#&&#&#&&#&#&&[    ]#&#&&.#%(@#@#               #@##&#&%#&#&%#&#&%#&%&%#&%&%#&%&%#&%&%)",
-	R"(#@#*##@#*##@#*##@#*#[    ]#@#*#.%%                    #@##@#*##@#*##@#*##@#*##@#*##@#*##@#*#)",
-	R"(#&#&&#&#&&#&#&&.#%(@                                  #@##&#&%#&#&%#&#&%#&%&%#&%&%#&%&%#&%&%)",
-	R"(#@#*##@#*##@#*#.%%                                    #@##@#*##@#*##@#*##@#*##@#*##@#*##@#*#)",
-	R"(#&#&&#&#&&.#%/@                                       #@##&#&%#&#&%#&#&%#&%&%#&%&%#&%&%#&%&%)",
-	R"(#@#*##@#*#.%%                                         #@##@#*##@#*##@#*##@#*##@#*##@#*##@#*#)",
-	R"(#&#&&.#%/@                                            #@##(#@##&#&%#&#&%#&%&%#&%&%#&%&%#&%&%)",
-	R"(#@#*#.%%                                               #@#@#&*#@#*##@#*##@#*##@#*##@#*##@#*#)",
-	R"(                                                                                            )",
-	R"(                                                                                            )",
-	R"(                                                                                            )",
-	R"(                                                                                            )",
-	R"(                                                                                            )",
-	R"( %                                                                                 %    %   )",
-	R"(##/#####%@                                                                        ##/####/##)",
-	R"(#&#&&#&#&&                                                                        #&%&%#&%&%)",
-	R"(#@#*##@#*#                                                                        #@#*##@#*#)",
-	R"(#&#&&#&#&&                                                                        #&%&%#&%&%)",
-	R"(#@#*##@#*#                                                                        #@#*##@#*#)",
-	R"(#&#&&#&#&&.%     %     %     %     %     %     %     %     %     %     %     %    #&%&%#&%&%)",
-	R"(#@#*##@#*###/####/####/####/####/####/####/####/####/####/####/####/###@#*##@#*#@#/####/####)",
-	R"(#&#&&#&#&&#&#&&#&#&&#&#&&#&#&&#&#&&#&#&&#&#&%#&#&%#&#&%#&#&%#&%&%#&%&%#&%&%#&%&%@##&#&&#&#&&)",
-	R"(#@#*##@#*##@#*##@#*##@#*##@#*##@#*##@#*##@#*##@#*##@#*##@#*##@#*##@#*##@#*##@#*#@#*##@#*##@#)"
-	};
-	string Cave[] = {
-	R"(%&@%@@%@@%@%%@@%@%%@@&@%%@@@@%%@%@@%@@%@%%@%@%%@@%@%%@@@@%%@&@@%@@%@&%@@%@%%@@%@%%@@@@%%@@@@)",
-	R"(%%@%&&%%%%&@%&%%&@%@%&&@%@%&&&%@%&&%%&%&@%%%&@%@%%&@%@%&&@%@%&&%%@%&@%%%%&@%@%%&@%@%&&@%@%&&)",
-	R"(%&%@%&%%%@%@@%%@%@@%@@%@@%@@&&@%@&&%%%@%@&%@%@@%&@%@@%@@&@@%@@&%&%@%@%%%@%@@%&@%@@%@@%@@%@@&)",
-	R"(@%@%%@@%%%%%%&%%%&%@%%%@%@%%@@%@%%@@%&%%%&%%%%%@%%%@%@%%@@%@%%@@%@%%&@%%%%%%@%%%@%@%%&@%@%%@)",
-	R"(@@@%%&@@@&%@%@@@%@%@@@%@@@@@%@@@%&%@@@%%@&@@%@%@@@%@&@@@%@@@&@%@@@%%@@@@@%@%@@@%@&@@@%@@@@@%)",
-	R"(%%@%%@%%@%%%                                                                     %@%%@@%@%%@)",
-	R"(%&@%%%%@%%%%       IT'S    DANGEROUS    TO   GO   ALONE!!    TAKE    THIS.       %@%@%@%@%@%)",
-	R"(%&@%@@%@@%@%                                                                     %@@@@%%@@@@)",
-	R"(%%@%&&%%%%&@                                 A                                   %@%&&@%@%&&)",
-	R"(%&%@%&%%%@%@            /\                  MMM                      /\          @%@@%@@%@@&)",
-	R"(@%@%%@@%%%%%           /\\\                 / \                     /\\\         %@%%&@%@%%@)",
-	R"(@@@%%&@@@&%@            \/                                           \/          &@@@%@@@@@%)",
-	R"(%%@%%@%%@%%%                                                                     %@%%@@%@%%@)",
-	R"(%&@%%%%@%%%%                               ->---                                 %@%@%@%@%@%)",
-	R"(%&@%@@%@@%@%                                                                     %@@@@%%@@@@)",
-	R"(%%@%&&%%%%&@                                                                     %@%&&@%@%&&)",
-	R"(%&%@%&%%%@%@                                                                     @%@@%@@%@@&)",
-	R"(@%@%%@@%%%%%                                                                     %@%%&@%@%%@)",
-	R"(@@@%%&@@@&%@                                                                     &@@@%@@@@@%)",
-	R"(%%@%%@%%@%%%                                                                     %@%%@@%@%%@)",
-	R"(%&@%%%%@%%%%                                                                     %@%@%@%@%@%)",
-	R"(%&@%@@%@@%@%                                                                     %@@@@%%@@@@)",
-	R"(%%@%&&%%%%&@%%@%%@%%@%%@%%@%%@%%@%%@%&@%&            %@%%@%%@%%@%%@%&@%@&%&%%@%%@%@%&&@%@%&&)",
-	R"(%&%@%&%%%@%@%%@@&&%%@@&@%%@@%&%&@@%&%&@@&            %@@%@%&@@%&%&@@&&%@@@&%%@@&@@%@@%@@%@@&)",
-	R"(@%@%%@@%%%%%%&%%%&%@%%%@%@%%@@%@%%@@%&%%%            %%%@@%@%%@@%@%%&@%%%%%%@%%%@%@%%&@%@%%@)"
-	};*/
-
 	if (!gd.isArtPrinted)
 	{
 		PrintUpperBar(gd);
-		PrintMap(gd, gd.maps[gd.mapToPrint], 25);
-		if (gd.mapToPrint == 0)
-		{
-			//PrintMap(gd, FirstScreen, 25);
-			if (gd.firstScreen)
-			{
-				gd.player.position = { 45, 16 };
-				gd.firstScreen = false;
-			}
-			else
-				gd.player.position = gd.storedPosition;
-		}
-		else if (gd.mapToPrint == 1)
-		{
-			//PrintMap(gd, Cave, 25);
-			gd.player.position = { 48, 28 };
-		}
-
+		PrintMap(gd, gd.actualMap, 25);
 		gd.isArtPrinted = true;
 	}
-
 	PrintPlayer(gd);
 }
 
+
 //Utilities
+void Initialize(GameData gd)
+{
+	SetConsoleFontSize(gd.ConsoleFontSize);
+
+
+	HWND console = GetConsoleWindow();
+	ShowWindow(console, SW_SHOWMAXIMIZED);
+	ShowScrollBar(GetConsoleWindow(), SB_BOTH, FALSE);
+
+	CONSOLE_CURSOR_INFO CCI;
+	GetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &CCI);
+	CCI.bVisible = false;
+	SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &CCI);
+}
 void SetConsoleFontSize(int size)
 {
 	static CONSOLE_FONT_INFOEX  cfi;
@@ -326,12 +273,12 @@ void PrintUpperBar(GameData gd)
 		cout << "<3 ";
 	}
 }
-void PrintMap(GameData& gd, string map[], int MAP_HEIGHT)
+void PrintMap(GameData& gd, Map map, int MAP_HEIGHT)
 {
 	HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
 	GetConsoleScreenBufferInfo(handle, &csbi);
-	int width = csbi.srWindow.Right - csbi.srWindow.Left;
+	int width = csbi.dwSize.X;
 	int height = csbi.srWindow.Bottom - csbi.srWindow.Top;
 
 	int mapWidth = 93;
@@ -345,7 +292,7 @@ void PrintMap(GameData& gd, string map[], int MAP_HEIGHT)
 	{
 		for (int j = 0; j < width; j++)
 		{
-			if (i < upperBorder || j < leftBorder || j > mapWidth + leftBorder || i >= MAP_HEIGHT + upperBorder)
+			if (i < upperBorder || j < leftBorder || j >= mapWidth + 1 || i >= MAP_HEIGHT + upperBorder)
 			{
 				gd.mapOfTiles[i][j].hasCollision = true;
 				gd.mapOfTiles[i][j].isEndOfMap = true;
@@ -359,14 +306,14 @@ void PrintMap(GameData& gd, string map[], int MAP_HEIGHT)
 		bool isBetweenBraces = false;
 		for (int j = 0; j < mapWidth; j++)
 		{
-			if (map[i][j] == 91)
+			if (map.mapGraphic[i][j] == 91)
 				isBetweenBraces = true;
-			if (map[i][j] == 93)
+			if (map.mapGraphic[i][j] == 93)
 				isBetweenBraces = false;
 
-			if (map[i][j] != ' ')
+			if (map.mapGraphic[i][j] != ' ')
 				gd.mapOfTiles[i + 4][j + 2].hasCollision = true;
-			else if (map[i][j] == ' ' && isBetweenBraces)
+			else if (map.mapGraphic[i][j] == ' ' && isBetweenBraces)
 			{
 				gd.mapOfTiles[i + 4][j + 2].hasCollision = true;
 				gd.mapOfTiles[i + 4][j + 2].isCaveEntrance = true;
@@ -380,22 +327,24 @@ void PrintMap(GameData& gd, string map[], int MAP_HEIGHT)
 					SetConsoleTextAttribute(gd.handle, 7);
 				else
 				{
-					if (gd.mapToPrint == 0)
+					if (map.mapType == MapType::OverWorld)
 						SetConsoleTextAttribute(gd.handle, 32);
+					else if (map.mapType == MapType::Cave)
+						SetConsoleTextAttribute(gd.handle, 4);
 					else
-						SetConsoleTextAttribute(gd.handle, 64);
-
+						SetConsoleTextAttribute(gd.handle, 6);
 				}
 			}
 			else
 			{
-				if (gd.mapToPrint == 0)
+				if (map.mapType == MapType::OverWorld || map.mapType == MapType::Mountain)
 					SetConsoleTextAttribute(gd.handle, 238);
-				else
+				else if (map.mapType == MapType::Cave)
 					SetConsoleTextAttribute(gd.handle, 7);
 			}
 
-			cout << map[i][j];
+
+			cout << map.mapGraphic[i][j];
 			SetConsoleTextAttribute(gd.handle, 7);
 		}
 		//cout << map[i];
@@ -404,12 +353,176 @@ void PrintMap(GameData& gd, string map[], int MAP_HEIGHT)
 }
 void PrintPlayer(GameData& gd)
 {
-	if (gd.mapToPrint == 0)
+	if (gd.actualMap.mapType == MapType::OverWorld || gd.actualMap.mapType == MapType::Mountain)
 		SetConsoleTextAttribute(gd.handle, 233);
 	else
 		SetConsoleTextAttribute(gd.handle, 9);
 
+
 	SetConsoleCursorPosition(gd.handle, { static_cast<short>(gd.player.position.x), static_cast<short>(gd.player.position.y) });
 	cout << gd.player.graphic;
+
 	SetConsoleTextAttribute(gd.handle, 7);
+}
+void ClearPreviousPlayerPos(GameData& gd)
+{
+	if (gd.actualMap.mapType == MapType::OverWorld || gd.actualMap.mapType == MapType::Mountain)
+		SetConsoleTextAttribute(gd.handle, 233);
+	else
+		SetConsoleTextAttribute(gd.handle, 7);
+	SetConsoleCursorPosition(gd.handle, { static_cast<short>(gd.player.position.x), static_cast<short>(gd.player.position.y) });
+	cout << ' ';
+	SetConsoleTextAttribute(gd.handle, 7);
+}
+void MapsSetup(Map maps[], int mapQty, int mapSize)
+{
+	for (int i = 0; i < mapQty; i++)
+	{
+		switch (i)
+		{
+		case 0:
+		{
+			maps[i].name = MapNames::OverWorld1;
+			maps[i].mapGraphic = new string[25]{
+			R"(#&#&&#&#&&#&#&&#&&#&&#&#&&#&#&&#&#&&#@#               #@##&#&%#&#&%#&#&%#&%&%#&%&%#&%&%#&%&%)",
+			R"(#@#*##@#*##@#*##@#*##@#*#@#@#*##@#*##@#               #@##@#*##@#*##@#*##@#*##@#*##@#*##@#*#)",
+			R"(#&#&&#&#&&#&#&&#&#&&[    ]#&#&&.#%(@#@#               #@##&#&%#&#&%#&#&%#&%&%#&%&%#&%&%#&%&%)",
+			R"(#@#*##@#*##@#*##@#*#[    ]#@#*#.%%                    #@##@#*##@#*##@#*##@#*##@#*##@#*##@#*#)",
+			R"(#&#&&#&#&&#&#&&.#%(@                                  #@##&#&%#&#&%#&#&%#&%&%#&%&%#&%&%#&%&%)",
+			R"(#@#*##@#*##@#*#.%%                                    #@##@#*##@#*##@#*##@#*##@#*##@#*##@#*#)",
+			R"(#&#&&#&#&&.#%/@                                       #@##&#&%#&#&%#&#&%#&%&%#&%&%#&%&%#&%&%)",
+			R"(#@#*##@#*#.%%                                         #@##@#*##@#*##@#*##@#*##@#*##@#*##@#*#)",
+			R"(#&#&&.#%/@                                            #@##(#@##&#&%#&#&%#&%&%#&%&%#&%&%#&%&%)",
+			R"(#@#*#.%%                                               #@#@#&*#@#*##@#*##@#*##@#*##@#*##@#*#)",
+			R"(                                                                                            )",
+			R"(                                                                                            )",
+			R"(                                                                                            )",
+			R"(                                                                                            )",
+			R"(                                                                                            )",
+			R"( %                                                                                 %    %   )",
+			R"(##/#####%@                                                                        ##/####/##)",
+			R"(#&#&&#&#&&                                                                        #&%&%#&%&%)",
+			R"(#@#*##@#*#                                                                        #@#*##@#*#)",
+			R"(#&#&&#&#&&                                                                        #&%&%#&%&%)",
+			R"(#@#*##@#*#                                                                        #@#*##@#*#)",
+			R"(#&#&&#&#&&.%     %     %     %     %     %     %     %     %     %     %     %    #&%&%#&%&%)",
+			R"(#@#*##@#*###/####/####/####/####/####/####/####/####/####/####/####/###@#*##@#*#@#/####/####)",
+			R"(#&#&&#&#&&#&#&&#&#&&#&#&&#&#&&#&#&&#&#&&#&#&%#&#&%#&#&%#&#&%#&%&%#&%&%#&%&%#&%&%@##&#&&#&#&&)",
+			R"(#@#*##@#*##@#*##@#*##@#*##@#*##@#*##@#*##@#*##@#*##@#*##@#*##@#*##@#*##@#*##@#*#@#*##@#*##@#)"
+			};
+			maps[i].mapType = MapType::OverWorld;
+		}
+		break;
+		case 1:
+		{
+			maps[i].name = MapNames::Cave1;
+			maps[i].mapGraphic = new string[25]{
+			R"(%&@%@@%@@%@%%@@%@%%@@&@%%@@@@%%@%@@%@@%@%%@%@%%@@%@%%@@@@%%@&@@%@@%@&%@@%@%%@@%@%%@@@@%%@@@@)",
+			R"(%%@%&&%%%%&@%&%%&@%@%&&@%@%&&&%@%&&%%&%&@%%%&@%@%%&@%@%&&@%@%&&%%@%&@%%%%&@%@%%&@%@%&&@%@%&&)",
+			R"(%&%@%&%%%@%@@%%@%@@%@@%@@%@@&&@%@&&%%%@%@&%@%@@%&@%@@%@@&@@%@@&%&%@%@%%%@%@@%&@%@@%@@%@@%@@&)",
+			R"(@%@%%@@%%%%%%&%%%&%@%%%@%@%%@@%@%%@@%&%%%&%%%%%@%%%@%@%%@@%@%%@@%@%%&@%%%%%%@%%%@%@%%&@%@%%@)",
+			R"(@@@%%&@@@&%@%@@@%@%@@@%@@@@@%@@@%&%@@@%%@&@@%@%@@@%@&@@@%@@@&@%@@@%%@@@@@%@%@@@%@&@@@%@@@@@%)",
+			R"(%%@%%@%%@%%%                                                                     %@%%@@%@%%@)",
+			R"(%&@%%%%@%%%%       IT'S    DANGEROUS    TO   GO   ALONE!!    TAKE    THIS.       %@%@%@%@%@%)",
+			R"(%&@%@@%@@%@%                                                                     %@@@@%%@@@@)",
+			R"(%%@%&&%%%%&@                                 A                                   %@%&&@%@%&&)",
+			R"(%&%@%&%%%@%@            /\                  MMM                      /\          @%@@%@@%@@&)",
+			R"(@%@%%@@%%%%%           /\\\                 / \                     /\\\         %@%%&@%@%%@)",
+			R"(@@@%%&@@@&%@            \/                                           \/          &@@@%@@@@@%)",
+			R"(%%@%%@%%@%%%                                                                     %@%%@@%@%%@)",
+			R"(%&@%%%%@%%%%                               ->---                                 %@%@%@%@%@%)",
+			R"(%&@%@@%@@%@%                                                                     %@@@@%%@@@@)",
+			R"(%%@%&&%%%%&@                                                                     %@%&&@%@%&&)",
+			R"(%&%@%&%%%@%@                                                                     @%@@%@@%@@&)",
+			R"(@%@%%@@%%%%%                                                                     %@%%&@%@%%@)",
+			R"(@@@%%&@@@&%@                                                                     &@@@%@@@@@%)",
+			R"(%%@%%@%%@%%%                                                                     %@%%@@%@%%@)",
+			R"(%&@%%%%@%%%%                                                                     %@%@%@%@%@%)",
+			R"(%&@%@@%@@%@%                                                                     %@@@@%%@@@@)",
+			R"(%%@%&&%%%%&@%%@%%@%%@%%@%%@%%@%%@%%@%&@%&            %@%%@%%@%%@%%@%&@%@&%&%%@%%@%@%&&@%@%&&)",
+			R"(%&%@%&%%%@%@%%@@&&%%@@&@%%@@%&%&@@%&%&@@&            %@@%@%&@@%&%&@@&&%@@@&%%@@&@@%@@%@@%@@&)",
+			R"(@%@%%@@%%%%%%&%%%&%@%%%@%@%%@@%@%%@@%&%%%            %%%@@%@%%@@%@%%&@%%%%%%@%%%@%@%%&@%@%%@)"
+			};
+			maps[i].mapType = MapType::Cave;
+		}
+		break;
+		case 2:
+		{
+			maps[i].name = MapNames::Mountain1;
+			maps[i].mapGraphic = new string[25]{
+			R"((#@(@&(@@(@((#@(.((..%.(((.@@((@(@@(@@(@((@@(/(./(.((..@%((@/@@(&@(@#(@@(@((,@(.((..@,((@,@@)",
+			R"(((.(/%((((/@(#((/#(@(//.(#(,#*(.(*#((*(/@((((/(@((/.(@(,(.(.(,#((.(/@((((/@(@((/,(@(,/.(.(,#)",
+			R"((*(@(%(((@(@#((@(&#(&%(/,(&/%(,(@(%(((@(@(((@(#(%@(//(&/#/,(@/%(/(@(@(((@(@#((@((#(&((/,(&/%)",
+			R"(.(.((&.((((((#(((%(@(((@(#((@#(.((@.(*(((*(((((@(((@(@((&@(.((@.(.((#.((((((@(((@(@(((@(.((@)",
+			R"(.%.((#..@#(@(.@@(#(.@#(.@.@.(.@.(*(..#((@*.@@((.@@(.&.@.(.@.#.(.*.((@..@@(@(.@@(,(.@,(.@.@.()",
+			R"(.@(@(#(@((.((&(@(@                                                               (.(@(@(@((@)",
+			R"(.((@....@#@((#(                                                                   @(@&((.(.()",
+			R"(                            (@                                (@                       (@,@@)",
+			R"(                         *@((.(((@                         (@((.(((@                   (.(.()",
+			R"(                        ((@(@*((.%@                       ((@(@(((.(@                  ((#@@)",
+			R"(                    @((@(#(((%(.(((.((                @(&@(.(((((.(((.((               (((@()",
+			R"(                  (@@((@*/#.(,*/&*(%((.(@           (@@((@*/&.(///&(@%(#/(@                 )",
+			R"(                  (@((%@(@((@#(@((@*(((((           (@((@@(@((@*(@((#*(.(((                 )",
+			R"(                  (@(/(@(#(.(%(.(*(/@*(((           (@(.(@(.(.(/@.(((/@((((                 )",
+			R"(                  (.(@(@((.@@%@@@@@.((@(@           (.(@(@(@/@@(&@(@#.((@(@               (@)",
+			R"(                  @.(%@((#(.((@@@@@.((@             @.(@/((.(.(((.((@.((@               (@(()",
+			R"(                       ((((@@@@@@@@@                    %(((&@@(((@(@@                 ((@(@)",
+			R"(                                                                                       (.((()",
+			R"(                                                                                        (#.()",
+			R"( ((      ,(@((@                                                                     ((@(@((@)",
+			R"(((@((#.((((@((@((#                                                               ((@((.@.(.()",
+			R"(((@(#@(#*(#&(#*(&#/#..&.(%....(@.,..(&./.*(&.#/#*.&./#..*.(@....(@./..(&././#%.&.(&/#&,(@/#@)",
+			R"(((.((((%(((%(&(((#((.(((((.((#((*((%(#*(@#(%((((*(((((.(((((,((%((*(@%(%/(@((%((#(@(.(((.(.()",
+			R"(#((&/@#//@/@.//@/@((.(@@#%.((@#@(((@#@(#@%#@(&((/(@@((.(#@#@/((@#@(#&@#@(#@((@(@@.(#@(&((#@@)",
+			R"(((.((((((((((#(((%(@(((@(#(((%(.(((((*(((((((((@(((@(@(((@(.(((((.((((((((((@(((@(@(((@(.((()"
+			};
+			maps[i].mapType = MapType::Mountain;
+		}
+		break;
+		default:
+			break;
+		}
+
+	}
+}
+void MapChange(GameData& gd, Directions dir)
+{
+	switch (gd.actualMap.name)
+	{
+	case MapNames::OverWorld1:
+		if (dir == Directions::East)
+		{
+			gd.actualMap = gd.maps[2];
+			gd.storedPosition = gd.player.position;
+			gd.player.position = { 2, 17 };
+		}
+		break;
+	case MapNames::Cave1:
+		if (dir == Directions::South)
+		{
+			gd.actualMap = gd.maps[0];
+			gd.player.position = gd.storedPosition;
+		}
+		break;
+	case MapNames::Mountain1:
+		if (dir == Directions::West)
+		{
+			gd.actualMap = gd.maps[0];
+			gd.player.position = gd.storedPosition;
+		}
+		break;
+	default:
+		break;
+	}
+}
+void MapChange(GameData& gd, bool isCave)
+{
+	switch (gd.actualMap.name)
+	{
+	case MapNames::OverWorld1:
+		gd.actualMap = gd.maps[1];
+		gd.storedPosition = gd.player.position;
+		gd.player.position = { 48, 28 };
+		break;
+	}
 }
