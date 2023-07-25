@@ -11,6 +11,7 @@ struct Player
 	bool hasShield{ false };
 	bool isAlive{ true };
 	bool canTakeDamage{ true };
+	bool canAttack{ true };
 	int receiveDamageCoolDown{1500};
 	int timer = 0;
 	Directions direction{};
@@ -24,4 +25,11 @@ struct Player
 			isAlive = false;
 		timer = clock() + receiveDamageCoolDown;
 	}
+};
+
+struct Sword
+{
+	Directions direction{};
+	Vector2 position{};
+	bool isFlying{false};
 };

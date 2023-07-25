@@ -1,10 +1,5 @@
 #pragma once
-#include <iostream>
-#include <windows.h>
-#include <conio.h>
 #include "Player.h"
-using namespace std;
-
 enum class Scenes
 {
 	Menu,
@@ -14,38 +9,12 @@ enum class Scenes
 	End
 };
 
-enum class MapType
-{
-	OverWorld,
-	Mountain,
-	Cave,
-	Counter
-};
-struct TileMap
-{
-	bool hasCollision;
-	bool isCaveEntrance;
-	bool isEndOfMap;
-	bool isItem;
-};
-
-enum class MapNames
-{
-	StartValley,
-	WesternRiver,
-	HyruleField,
-	KokiriForest,
-	Cave1,
-	Cave2,
-	Mountain1,
-	Count
-};
 struct Map
 {
-	MapNames name;
-	string* mapGraphic;
+	MapNames name{};
+	string* mapGraphic{};
 	bool isCaveItemTaken = false;
-	MapType mapType;
+	MapType mapType{};
 };
 struct GameData
 {
@@ -61,6 +30,7 @@ struct GameData
 
 	//int mapToPrint = 0;
 	Player player;
+	Sword masterSword;
 	const static int MAPS_QUANTITY = static_cast<int>(MapNames::Count);
 	const int MAP_SIZE = 25;
 	//Map Size = [25][93] added 4 and 2 to make the offset
@@ -111,7 +81,6 @@ void PrintMap(GameData& gd, Map map, int MAP_HEIGHT);
 void PrintUpperBar(GameData gd);
 void CleanUpperBar(GameData gd);
 void PrintPlayer(GameData& gd);
-void PrintEnemies(GameData& gd);
 
 void ClearPreviousPlayerPos(GameData& gd);
 void MapsSetup(GameData& gd, Map maps[], int mapQty, int mapSize);
@@ -120,5 +89,15 @@ void MapChange(GameData& gd, bool isCave);
 
 //PlayerFunctions
 void PlayerAttack(GameData& gd);
+void SwordUpdate(GameData& gd);
+
 void PlayerParry(GameData& gd);
 void TakeItem(GameData& gd);
+void RangedAttackExplosion(GameData& gd, Vector2 lastAttackedPosition);
+void CleanExplosion(GameData& gd, Vector2 lastAttackedPosition);
+bool isEnemyHitted(GameData& gd, Vector2 attackedPosition);
+void CleanTrail(GameData gd, Vector2 attackedPosition, Directions dir);
+
+void EnemyUpdate(GameData& gd);
+void EnemyDraw(GameData& gd);
+

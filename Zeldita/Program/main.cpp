@@ -87,7 +87,7 @@ void MenuDraw(GameData& gd)
 			coordinates.X = width / 2 - (logoWidth / 2);
 			coordinates.Y = height / 2 - (LOGO_HEIGHT / 2);
 			string logo[LOGO_HEIGHT] = {
-			R"(                                     /@)",
+			R"(                                     /@           Nicolas Laure TSDV_ImageCampus 2023)",
 			R"(                     __        __   /\/)",
 			R"(                    /==\      /  \_/\/)",
 			R"(                  /======\    \/\__ \__)",
@@ -145,7 +145,6 @@ void MenuDraw(GameData& gd)
 		}
 		gd.isArtPrinted = true;
 	}
-
 }
 
 void Game(GameData& gd)
@@ -269,11 +268,19 @@ void GameUpdate(GameData& gd)
 	}
 	gd.player.direction = gd.playerLastDirection;
 
+	if (gd.masterSword.isFlying)
+	{
+		SwordUpdate(gd);
+	}
+
 	for (int i = 0; i < gd.MAX_ENEMIES; i++)
 	{
 		if (gd.enemies[i].position.x == gd.player.position.x && gd.enemies[i].position.y == gd.player.position.y && gd.player.canTakeDamage)
 			gd.player.TakeDamage();
 	}
+
+	EnemyUpdate(gd);
+	EnemyDraw(gd);
 }
 void GameDraw(GameData& gd)
 {
@@ -290,8 +297,6 @@ void GameDraw(GameData& gd)
 	}
 
 	PrintPlayer(gd);
-	if (gd.actualMap.name == MapNames::Mountain1)
-		PrintEnemies(gd);
 }
 
 void GameOver(GameData& gd)
@@ -346,6 +351,105 @@ void GameOverDraw(GameData& gd)
 	}
 }
 
+void EnemyUpdate(GameData& gd)
+{
+	for (Enemy& enemy : gd.enemies)
+	{
+		if (enemy.isActiveEnemy && enemy.isAlive)
+		{
+			enemy.hasChangedOnLastFrame = false;
+			if (enemy.stateChangeTime == 0)
+			{
+				enemy.stateChangeTime = clock() + (rand() % 400 + 150);
+			}
+
+			if (clock() >= enemy.stateChangeTime)
+			{
+				enemy.stateChangeTime = 0;
+
+				if (enemy.enemyType == EnemyType::Spider)
+				{
+					enemy.state = static_cast<EnemyStates>(rand() % 2);
+
+					if (enemy.state == EnemyStates::Move)
+						static_cast<Spider&>(enemy).Move(gd.mapOfTiles);
+				}
+				else if (enemy.enemyType == EnemyType::Octorok && !enemy.isMoving)
+				{
+					enemy.state = static_cast<EnemyStates>(rand() % 4);
+
+					switch (enemy.state)
+					{
+					case EnemyStates::Move:
+						static_cast<Octorok&>(enemy).qtyOfMoves = rand() % 3 + 1;
+						enemy.isMoving = true;
+						enemy.moveTimer = clock() + enemy.moveCoolDown;
+						break;
+					case EnemyStates::Rotate:
+						if (clock() >= static_cast<Octorok&>(enemy).rotationTimer)
+							static_cast<Octorok&>(enemy).Rotate();
+						break;
+					case EnemyStates::Attack:
+						static_cast<Octorok&>(enemy).Shoot();
+						break;
+					default:
+						break;
+					}
+				}
+			}
+			if (enemy.isMoving && clock() >= enemy.moveTimer)
+			{
+				if (enemy.enemyType == EnemyType::Octorok)
+				{
+					static_cast<Octorok&>(enemy).Move(gd.mapOfTiles);
+					static_cast<Octorok&>(enemy).qtyOfMoves--;
+					if (static_cast<Octorok&>(enemy).qtyOfMoves <= 0)
+					{
+						enemy.isMoving = false;
+						static_cast<Octorok&>(enemy).qtyOfMoves = 0;
+					}
+				}
+				enemy.moveTimer = clock() + enemy.moveCoolDown;
+			}
+		}
+	}
+}
+
+void EnemyDraw(GameData& gd)
+{
+	if (gd.actualMap.mapType == MapType::OverWorld || gd.actualMap.mapType == MapType::Mountain)
+		SetConsoleTextAttribute(gd.handle, 236);
+
+	for (Enemy& enemy : gd.enemies)
+	{
+		if (enemy.isActiveEnemy && enemy.isAlive && enemy.hasChangedOnLastFrame)
+		{
+			SetConsoleCursorPosition(gd.handle, { static_cast<short>(enemy.previousPosition.x),  static_cast<short>(enemy.previousPosition.y) });
+			cout << " ";
+			SetConsoleCursorPosition(gd.handle, { static_cast<short>(enemy.position.x),  static_cast<short>(enemy.position.y) });
+			if (enemy.enemyType == EnemyType::Spider)
+				cout << "M";
+			else if (enemy.enemyType == EnemyType::Octorok)
+			{
+				switch (static_cast<Octorok&>(enemy).dir)
+				{
+				case Directions::North:
+					cout << "V";
+					break;
+				case Directions::East:
+					cout << "<";
+					break;
+				case Directions::West:
+					cout << ">";
+					break;
+				case Directions::South:
+					cout << "A";
+					break;
+				}
+			}
+		}
+	}
+}
 //Utilities
 void Initialize(GameData gd)
 {
@@ -535,20 +639,6 @@ void PrintPlayer(GameData& gd)
 	}
 	SetConsoleTextAttribute(gd.handle, 7);
 }
-void PrintEnemies(GameData& gd)
-{
-	if (gd.actualMap.mapType == MapType::OverWorld || gd.actualMap.mapType == MapType::Mountain)
-		SetConsoleTextAttribute(gd.handle, 236);
-
-	for (int i = 0; i < gd.MAX_ENEMIES; i++)
-	{
-		SetConsoleCursorPosition(gd.handle, { static_cast<short>(gd.enemies[i].position.x),static_cast<short>(gd.enemies[i].position.y) });
-		if (gd.enemies[i].isAlive)
-			cout << gd.enemies[i].graphic;
-		else if (gd.enemies[i].isActiveEnemy)
-			cout << ' ';
-	}
-}
 
 void ClearPreviousPlayerPos(GameData& gd)
 {
@@ -697,31 +787,31 @@ void MapsSetup(GameData& gd, Map maps[], int mapQty, int mapSize)
 		case MapNames::KokiriForest:
 			maps[i].name = MapNames::KokiriForest;
 			maps[i].mapGraphic = new string[25]{
-			R"(#%.#&%#@/(@/#@((@*#@(#@*#@##@/#@##@(#@#(@##&#(&##*((&##.(%&#%.(&%#@,#@/(@((@*#@##@*#@##@/#@##)",
-			R"(#@##(##@###&#@#/(@#&#.#@(/#.#&(.#,###.#*((&,#(##@(##(#@###(#@#####@#(#&#@#/#@#@#.#@(/#.#&(.(.)",
-			R"(./,@.%&#(@.*,#&@..*#@@(.##%@&*##*&@&/(.(@@,(..@&.,*.@#..%.@.*.@.&.#*@.*.#%@../#@@/.##&@&/##(@)",
-			R"(#%##.%#@##.*#@##..#&##(.#/#(&,#.#(@(#.#*@[     ]#/#.@####.@#%##.&#@##.*#@##..#@#((.#/##&*#.##)",
-			R"(@##@#%@#%@#*&#%##.(#%.#..#&.#,.(@,((,(@/#[     ]#(@#@%#(@#@@##@#&@##&#*&#%%#.*#%,#..#&.#*.#@.)",
-			R"(#&,###.@#@#,                                         #@##,#.%#@#&                  (/#@#/#&##)",
-			R"(#@@@#@&@&                                              @@@#.%#                      (@@,/@.#.)",
-			R"(###@#@             ##          (@                                       ##              *###@)",
-			R"(#%#,              #&((&       #,&#@                                    #@(##             ,##@)",
-			R"(%#                %%%@&#     ,%%#@@,                                   #%%%@%              @#)",
-			R"(#%                                                                                         #@)",
-			R"(%#                                                                                         #@)",
-			R"(#%                *###(      ,(@##                                     ,((#&               @#)",
-			R"(%#                #&##%       #,&#@                                    #@#&(               #@)",
-			R"(#%                                                                                         #@)",
-			R"(%#                                                                                         @#)",
-			R"(#%                                                                                         #@)",
-			R"(###               *%#(&      ,#,##@                                     &(##               (#)",
-			R"(##&##%            #&##@      ,#(##&                                    #@(%@             #(##)",
-			R"((&.#%#.(                                                ##@,(                         (#*#@##)",
-			R"((@######(##                                           #(#####@(#                   #%@##*(.#.)",
-			R"((/&#*##.(#.#,@    *@    #@    #@    #&               #@@#%###@#*(&      @    /@    ##,@&#(@*@)",
-			R"(#&##/%#@##/*(#(##@#(/##@##*##&#(,##%#(.##            ####/@#%##/&##&##@##(##@##/##@#/#*%*#.#*)",
-			R"(%%,.(&%#%@(/#(%(%@##%&#@###&#&##*&#%(%,&#            ###@(@%##@#&(#@*%@##%/%@(#%%#@,#&*%/,#@*)",
-			R"(#&#####@###&#@###@#%##%@#/##&%#.##@,#.##&            *####((%#####@###&#@###@#@##%@#/##@&,,#%)"
+			R"(#%.#&%#@/(@/#@((@*#@(#@*#@##@/#@##@(#@#(@##&#(&##*((&##.(%&#%.(&%#@,#@/(@((@*#@##@*#@##@/#@#)",
+			R"(#@##(##@###&#@#/(@#&#.#@(/#.#&(.#,###.#*((&,#(##@(##(#@###(#@#####@#(#&#@#/#@#@#.#@(/#.#&(.()",
+			R"(./,@.%&#(@.*,#&@..*#@@(.##%@&*##*&@&/(.(@@,(..@&.,*.@#..%.@.*.@.&.#*@.*.#%@../#@@/.##&@&/##()",
+			R"(#%##.%#@##.*#@##..#&##(.#/#(&,#.#(@(#.#*@[     ]#/#.@####.@#%##.&#@##.*#@##..#@#((.#/##&*#.#)",
+			R"(@##@#%@#%@#*&#%##.(#%.#..#&.#,.(@,((,(@/#[     ]#(@#@%#(@#@@##@#&@##&#*&#%%#.*#%,#..#&.#*.#@)",
+			R"(#&,###.@#@#,                                         #@##,#.%#@#&                  (/#@#/#&#)",
+			R"(#@@@#@&@&                                              @@@#.%#                      (@@,/@.#)",
+			R"(###@#@             ##          (@                                       ##              *###)",
+			R"(#%#,              #&((&       #,&#@                                    #@(##             ,##)",
+			R"(%#                %%%@&#     ,%%#@@,                                   #%%%@%              @)",
+			R"(#%                                                                                         #)",
+			R"(%#                                                                                         #)",
+			R"(#%                *###(      ,(@##                                     ,((#&               @)",
+			R"(%#                #&##%       #,&#@                                    #@#&(               #)",
+			R"(#%                                                                                         #)",
+			R"(%#                                                                                         @)",
+			R"(#%                                                                                         #)",
+			R"(###               *%#(&      ,#,##@                                     &(##               ()",
+			R"(##&##%            #&##@      ,#(##&                                    #@(%@             #(#)",
+			R"((&.#%#.(                                                ##@,(                         (#*#@#)",
+			R"((@######(##                                           #(#####@(#                   #%@##*(.#)",
+			R"((/&#*##.(#.#,@    *@    #@    #@    #&               #@@#%###@#*(&      @    /@    ##,@&#(@*)",
+			R"(#&##/%#@##/*(#(##@#(/##@##*##&#(,##%#(.##            ####/@#%##/&##&##@##(##@##/##@#/#*%*#.#)",
+			R"(%%,.(&%#%@(/#(%(%@##%&#@###&#&##*&#%(%,&#            ###@(@%##@#&(#@*%@##%/%@(#%%#@,#&*%/,#@)",
+			R"(#&#####@###&#@###@#%##%@#/##&%#.##@,#.##&            *####((%#####@###&#@###@#@##%@#/##@&,,#)"
 			};
 			maps[i].mapType = MapType::OverWorld;
 			break;
@@ -837,9 +927,36 @@ void MapChange(GameData& gd, Directions dir)
 		{
 			gd.actualMap = gd.maps[static_cast<int>(MapNames::Mountain1)];
 			gd.storedPosition = gd.player.position;
-			Enemy spider{ 'M',0, true , {2, 20}, true };
-			gd.enemies[0] = spider;
 			gd.player.position = { 2, 17 };
+
+			Enemy spider[3];
+			for (int i = 0; i < 3; i++)
+			{
+				spider[i].HealthPoints = 1;
+				spider[i].isActiveEnemy = true;
+				spider[i].previousPosition = { 3, 20 };
+				spider[i].enemyType = EnemyType::Spider;
+				spider[i].isActiveEnemy = true;
+				spider[i].isAlive = true;
+				if (i == 0)
+					spider[i].position = { 3, 20 };
+				else if (i == 1)
+					spider[i].position = { 17,10 };
+				else
+					spider[i].position = { 50,18 };
+			}
+			Enemy octorok;
+			octorok.HealthPoints = 1;
+			octorok.isActiveEnemy = true;
+			octorok.previousPosition = { 5, 20 };
+			octorok.position = { 5, 20 };
+			octorok.enemyType = EnemyType::Octorok;
+			octorok.isActiveEnemy = true;
+			octorok.isAlive = true;
+			gd.enemies[0] = spider[0];
+			gd.enemies[1] = spider[1];
+			gd.enemies[2] = spider[2];
+			gd.enemies[3] = octorok;
 		}
 		else if (dir == Directions::North)
 		{
@@ -863,6 +980,12 @@ void MapChange(GameData& gd, Directions dir)
 		}
 		break;
 	case MapNames::Mountain1:
+		for (int i = 0; i < gd.MAX_ENEMIES; i++)
+		{
+			gd.enemies[i].isActiveEnemy = false;
+			gd.enemies[i].isAlive = false;
+		}
+
 		if (dir == Directions::West)
 		{
 			gd.actualMap = gd.maps[static_cast<int>(MapNames::StartValley)];
@@ -920,34 +1043,205 @@ void PlayerAttack(GameData& gd)
 		SetConsoleTextAttribute(gd.handle, 9);
 
 	Vector2 attackedPosition = { 0,0 };
-	switch (gd.player.direction)
+	if (gd.player.healthPoints == gd.player.maxHealthPoints && !gd.masterSword.isFlying)
+	{
+		gd.masterSword.direction = gd.player.direction;
+		gd.masterSword.position = gd.player.position;
+		gd.masterSword.isFlying = true;
+	}
+	else if (gd.player.healthPoints != gd.player.maxHealthPoints)
+	{
+		switch (gd.player.direction)
+		{
+		case Directions::North:
+			attackedPosition = { gd.player.position.x , gd.player.position.y - 1 };
+			break;
+		case Directions::South:
+			attackedPosition = { gd.player.position.x , gd.player.position.y + 1 };
+			break;
+		case Directions::East:
+			attackedPosition = { gd.player.position.x + 1 , gd.player.position.y };
+			break;
+		case Directions::West:
+			attackedPosition = { gd.player.position.x - 1 , gd.player.position.y };
+			break;
+		}
+		SetConsoleCursorPosition(gd.handle, { static_cast<short>(attackedPosition.x),  static_cast<short>(attackedPosition.y) });
+		if (attackedPosition.x != gd.player.position.x && !gd.mapOfTiles[attackedPosition.y][attackedPosition.x].hasCollision)
+			cout << static_cast<char>(45);
+		else if (!gd.mapOfTiles[attackedPosition.y][attackedPosition.x].hasCollision)
+			cout << static_cast<char>(124);
+		Sleep(40);
+
+		SetConsoleTextAttribute(gd.handle, 7);
+
+		isEnemyHitted(gd, attackedPosition);
+	}
+
+	gd.player.canAttack = true;
+}
+
+void SwordUpdate(GameData& gd)
+{
+	if (gd.actualMap.mapType == MapType::OverWorld || gd.actualMap.mapType == MapType::Mountain)
+		SetConsoleTextAttribute(gd.handle, 233);
+	else
+		SetConsoleTextAttribute(gd.handle, 9);
+
+	switch (gd.masterSword.direction)
 	{
 	case Directions::North:
-		attackedPosition = { gd.player.position.x , gd.player.position.y - 1 };
+		if (gd.masterSword.position.y - 1 > 0 && !gd.mapOfTiles[gd.masterSword.position.y - 1][gd.masterSword.position.x].hasCollision)
+		{
+			gd.masterSword.position.y--;
+			SetConsoleCursorPosition(gd.handle, { static_cast<short>(gd.masterSword.position.x),  static_cast<short>(gd.masterSword.position.y) });
+			cout << static_cast<char>(124);
+			if (gd.masterSword.position.y != gd.player.position.y - 1)
+				CleanTrail(gd, gd.masterSword.position, gd.masterSword.direction);
+
+			isEnemyHitted(gd, gd.masterSword.position);
+		}
+		else
+			gd.masterSword.isFlying = false;
 		break;
 	case Directions::South:
-		attackedPosition = { gd.player.position.x , gd.player.position.y + 1 };
+		if (gd.masterSword.position.y < 30 && !gd.mapOfTiles[gd.masterSword.position.y + 1][gd.masterSword.position.x].hasCollision)
+		{
+			gd.masterSword.position.y++;
+			SetConsoleCursorPosition(gd.handle, { static_cast<short>(gd.masterSword.position.x),  static_cast<short>(gd.masterSword.position.y) });
+			cout << static_cast<char>(124);
+
+			if (gd.masterSword.position.y != gd.player.position.y + 1)
+				CleanTrail(gd, gd.masterSword.position, gd.masterSword.direction);
+
+			isEnemyHitted(gd, gd.masterSword.position);
+		}
+		else
+			gd.masterSword.isFlying = false;
 		break;
 	case Directions::East:
-		attackedPosition = { gd.player.position.x + 1 , gd.player.position.y };
+		if (gd.masterSword.position.x + 1 < 95 && !gd.mapOfTiles[gd.masterSword.position.y][gd.masterSword.position.x + 1].hasCollision)
+		{
+			gd.masterSword.position.x++;
+			SetConsoleCursorPosition(gd.handle, { static_cast<short>(gd.masterSword.position.x),  static_cast<short>(gd.masterSword.position.y) });
+			cout << static_cast<char>(45);
+
+			if (gd.masterSword.position.x != gd.player.position.x + 1)
+				CleanTrail(gd, gd.masterSword.position, gd.masterSword.direction);
+
+			isEnemyHitted(gd, gd.masterSword.position);
+		}
+		else
+			gd.masterSword.isFlying = false;
 		break;
 	case Directions::West:
-		attackedPosition = { gd.player.position.x - 1 , gd.player.position.y };
+		if (gd.masterSword.position.x - 1 > 0 && !gd.mapOfTiles[gd.masterSword.position.y][gd.masterSword.position.x - 1].hasCollision)
+		{
+			gd.masterSword.position.x--;
+			SetConsoleCursorPosition(gd.handle, { static_cast<short>(gd.masterSword.position.x),  static_cast<short>(gd.masterSword.position.y) });
+			cout << static_cast<char>(45);
+
+			if (gd.masterSword.position.x != gd.player.position.x - 1)
+				CleanTrail(gd, gd.masterSword.position, gd.masterSword.direction);
+
+			isEnemyHitted(gd, gd.masterSword.position);
+		}
+		else
+			gd.masterSword.isFlying = false;
 		break;
 	}
+	if (!gd.masterSword.isFlying)
+	{
+		RangedAttackExplosion(gd, gd.masterSword.position);
+		CleanTrail(gd, gd.masterSword.position, gd.masterSword.direction);
+	}
+}
+void RangedAttackExplosion(GameData& gd, Vector2 lastAttackedPosition)
+{
+	for (int i = 1; i <= 2; i++)
+	{
+		if (!gd.mapOfTiles[lastAttackedPosition.y - i][lastAttackedPosition.x - i].hasCollision)
+		{
+			SetConsoleCursorPosition(gd.handle, { static_cast<short>(lastAttackedPosition.x - i),  static_cast<short>(lastAttackedPosition.y - i) });
+			cout << static_cast<char>(92);
+			isEnemyHitted(gd, { lastAttackedPosition.x - i, lastAttackedPosition.y - i });
+		}
+		if (!gd.mapOfTiles[lastAttackedPosition.y - i][lastAttackedPosition.x + i].hasCollision)
+		{
+			SetConsoleCursorPosition(gd.handle, { static_cast<short>(lastAttackedPosition.x + i),  static_cast<short>(lastAttackedPosition.y - i) });
+			cout << static_cast<char>(47);
+			isEnemyHitted(gd, { lastAttackedPosition.x + i, lastAttackedPosition.y - i });
+		}
+		if (!gd.mapOfTiles[lastAttackedPosition.y + i][lastAttackedPosition.x - i].hasCollision)
+		{
+			SetConsoleCursorPosition(gd.handle, { static_cast<short>(lastAttackedPosition.x - i),  static_cast<short>(lastAttackedPosition.y + i) });
+			cout << static_cast<char>(47);
+			isEnemyHitted(gd, { lastAttackedPosition.x - i, lastAttackedPosition.y + i });
+		}
+		if (!gd.mapOfTiles[lastAttackedPosition.y + i][lastAttackedPosition.x + i].hasCollision)
+		{
+			SetConsoleCursorPosition(gd.handle, { static_cast<short>(lastAttackedPosition.x + i),  static_cast<short>(lastAttackedPosition.y + i) });
+			cout << static_cast<char>(92);
+			isEnemyHitted(gd, { lastAttackedPosition.x + i, lastAttackedPosition.y + i });
+		}
+	}
+	CleanExplosion(gd, lastAttackedPosition);
+}
+void CleanExplosion(GameData& gd, Vector2 lastAttackedPosition)
+{
+	float time;
+	float timer;
+	for (int i = 1; i <= 2; i++)
+	{
+		time = clock();
+		timer = time + 50;
+		while (time < timer)
+		{
+			time = clock();
+		}
+		if (!gd.mapOfTiles[lastAttackedPosition.y - i][lastAttackedPosition.x - i].hasCollision)
+		{
+			SetConsoleCursorPosition(gd.handle, { static_cast<short>(lastAttackedPosition.x - i),  static_cast<short>(lastAttackedPosition.y - i) });
+			cout << ' ';
+		}
+		if (!gd.mapOfTiles[lastAttackedPosition.y - i][lastAttackedPosition.x + i].hasCollision)
+		{
+			SetConsoleCursorPosition(gd.handle, { static_cast<short>(lastAttackedPosition.x + i),  static_cast<short>(lastAttackedPosition.y - i) });
+			cout << ' ';
+		}
+		if (!gd.mapOfTiles[lastAttackedPosition.y + i][lastAttackedPosition.x - i].hasCollision)
+		{
+			SetConsoleCursorPosition(gd.handle, { static_cast<short>(lastAttackedPosition.x - i),  static_cast<short>(lastAttackedPosition.y + i) });
+			cout << ' ';
+		}
+		if (!gd.mapOfTiles[lastAttackedPosition.y + i][lastAttackedPosition.x + i].hasCollision)
+		{
+			SetConsoleCursorPosition(gd.handle, { static_cast<short>(lastAttackedPosition.x + i),  static_cast<short>(lastAttackedPosition.y + i) });
+			cout << ' ';
+		}
+	}
+}
+void CleanTrail(GameData gd, Vector2 attackedPosition, Directions dir)
+{
+	float time = clock();
+	float timer = time + 20;
+	while (time < timer)
+	{
+		time = clock();
+	}
+
 	SetConsoleCursorPosition(gd.handle, { static_cast<short>(attackedPosition.x),  static_cast<short>(attackedPosition.y) });
-	if (attackedPosition.x != gd.player.position.x && !gd.mapOfTiles[attackedPosition.y][attackedPosition.x].hasCollision)
-		cout << static_cast<char>(45);
-	else if (!gd.mapOfTiles[attackedPosition.y][attackedPosition.x].hasCollision)
-		cout << static_cast<char>(124);
-	Sleep(40);
-
-	SetConsoleTextAttribute(gd.handle, 7);
-
+	cout << ' ';
+}
+bool isEnemyHitted(GameData& gd, Vector2 attackedPosition)
+{
 	for (int i = 0; i < gd.MAX_ENEMIES; i++)
 	{
 		if (gd.enemies[i].position.x == attackedPosition.x && gd.enemies[i].position.y == attackedPosition.y)
+		{
 			gd.enemies[i].TakeDamage(gd.player.attackDamage);
+			return true;
+		}
 	}
 }
 void PlayerParry(GameData& gd)
