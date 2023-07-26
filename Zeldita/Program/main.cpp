@@ -6,7 +6,7 @@ void main()
 
 void Play()
 {
-	srand(0);
+	srand(time(0));
 	GameData gd{};
 	Initialize(gd);
 	GameLoop(gd);
@@ -355,12 +355,15 @@ void EnemyUpdate(GameData& gd)
 {
 	for (Enemy& enemy : gd.enemies)
 	{
+		if (!enemy.isAlive)
+			enemy = gd.deadEnemy;
+
 		if (enemy.isActiveEnemy && enemy.isAlive)
 		{
 			enemy.hasChangedOnLastFrame = false;
 			if (enemy.stateChangeTime == 0)
 			{
-				enemy.stateChangeTime = clock() + (rand() % 400 + 150);
+				enemy.stateChangeTime = clock() + (rand() % 250 + 50);
 			}
 
 			if (clock() >= enemy.stateChangeTime)
@@ -376,8 +379,11 @@ void EnemyUpdate(GameData& gd)
 				}
 				else if (enemy.enemyType == EnemyType::Octorok && !enemy.isMoving)
 				{
-					enemy.state = static_cast<EnemyStates>(rand() % 4);
-
+					enemy.state = static_cast<EnemyStates>(rand() % 3);
+					/// <summary>
+					/// ////////
+					/// </summary>
+					/// <param name="gd"></param>
 					switch (enemy.state)
 					{
 					case EnemyStates::Move:
@@ -390,7 +396,8 @@ void EnemyUpdate(GameData& gd)
 							static_cast<Octorok&>(enemy).Rotate();
 						break;
 					case EnemyStates::Attack:
-						static_cast<Octorok&>(enemy).Shoot();
+						if (!static_cast<Octorok&>(enemy).rock.isFlying)
+							static_cast<Octorok&>(enemy).Shoot();
 						break;
 					default:
 						break;
@@ -410,6 +417,14 @@ void EnemyUpdate(GameData& gd)
 					}
 				}
 				enemy.moveTimer = clock() + enemy.moveCoolDown;
+			}
+		}
+		if (enemy.enemyType == EnemyType::Octorok)
+		{
+			if (static_cast<Octorok&>(enemy).rock.isFlying && clock() >= static_cast<Octorok&>(enemy).rock.moveTimer)
+			{
+				static_cast<Octorok&>(enemy).rock.RockUpdate(gd.mapOfTiles, gd.actualMap.mapType, gd.handle);
+				static_cast<Octorok&>(enemy).rock.moveTimer = clock() + static_cast<Octorok&>(enemy).rock.moveCoolDown;
 			}
 		}
 	}
@@ -450,6 +465,8 @@ void EnemyDraw(GameData& gd)
 		}
 	}
 }
+
+
 //Utilities
 void Initialize(GameData gd)
 {
@@ -1097,7 +1114,7 @@ void SwordUpdate(GameData& gd)
 			SetConsoleCursorPosition(gd.handle, { static_cast<short>(gd.masterSword.position.x),  static_cast<short>(gd.masterSword.position.y) });
 			cout << static_cast<char>(124);
 			if (gd.masterSword.position.y != gd.player.position.y - 1)
-				CleanTrail(gd, gd.masterSword.position, gd.masterSword.direction);
+				CleanTrail(gd.handle, gd.masterSword.position);
 
 			isEnemyHitted(gd, gd.masterSword.position);
 		}
@@ -1112,7 +1129,7 @@ void SwordUpdate(GameData& gd)
 			cout << static_cast<char>(124);
 
 			if (gd.masterSword.position.y != gd.player.position.y + 1)
-				CleanTrail(gd, gd.masterSword.position, gd.masterSword.direction);
+				CleanTrail(gd.handle, gd.masterSword.position);
 
 			isEnemyHitted(gd, gd.masterSword.position);
 		}
@@ -1127,7 +1144,7 @@ void SwordUpdate(GameData& gd)
 			cout << static_cast<char>(45);
 
 			if (gd.masterSword.position.x != gd.player.position.x + 1)
-				CleanTrail(gd, gd.masterSword.position, gd.masterSword.direction);
+				CleanTrail(gd.handle, gd.masterSword.position);
 
 			isEnemyHitted(gd, gd.masterSword.position);
 		}
@@ -1142,7 +1159,7 @@ void SwordUpdate(GameData& gd)
 			cout << static_cast<char>(45);
 
 			if (gd.masterSword.position.x != gd.player.position.x - 1)
-				CleanTrail(gd, gd.masterSword.position, gd.masterSword.direction);
+				CleanTrail(gd.handle, gd.masterSword.position);
 
 			isEnemyHitted(gd, gd.masterSword.position);
 		}
@@ -1153,7 +1170,7 @@ void SwordUpdate(GameData& gd)
 	if (!gd.masterSword.isFlying)
 	{
 		RangedAttackExplosion(gd, gd.masterSword.position);
-		CleanTrail(gd, gd.masterSword.position, gd.masterSword.direction);
+		CleanTrail(gd.handle, gd.masterSword.position);
 	}
 }
 void RangedAttackExplosion(GameData& gd, Vector2 lastAttackedPosition)
@@ -1221,18 +1238,7 @@ void CleanExplosion(GameData& gd, Vector2 lastAttackedPosition)
 		}
 	}
 }
-void CleanTrail(GameData gd, Vector2 attackedPosition, Directions dir)
-{
-	float time = clock();
-	float timer = time + 20;
-	while (time < timer)
-	{
-		time = clock();
-	}
 
-	SetConsoleCursorPosition(gd.handle, { static_cast<short>(attackedPosition.x),  static_cast<short>(attackedPosition.y) });
-	cout << ' ';
-}
 bool isEnemyHitted(GameData& gd, Vector2 attackedPosition)
 {
 	for (int i = 0; i < gd.MAX_ENEMIES; i++)

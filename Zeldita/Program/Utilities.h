@@ -12,12 +12,6 @@ enum class Directions
 	South,
 };
 
-struct Vector2
-{
-	int x;
-	int y;
-};
-
 enum class MapType
 {
 	OverWorld,
@@ -25,6 +19,12 @@ enum class MapType
 	Cave,
 	Counter
 };
+struct Vector2
+{
+	int x;
+	int y;
+};
+
 struct TileMap
 {
 	bool hasCollision;
@@ -44,3 +44,5 @@ enum class MapNames
 	Mountain1,
 	Count
 };
+
+void CleanTrail(HANDLE handle, Vector2 attackedPosition);

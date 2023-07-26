@@ -20,7 +20,6 @@ struct GameData
 {
 	// Global Variables
 	HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-
 	Scenes scene = Scenes::Menu;
 	Scenes prevScene;
 	const int ConsoleFontSize = 30;
@@ -50,7 +49,7 @@ struct GameData
 	int playerLivesPrevFrame;
 
 	const static int MAX_ENEMIES = 10;
-	Enemy deadEnemy = {};
+	Enemy deadEnemy;
 	Enemy enemies[MAX_ENEMIES];
 	
 	Directions playerLastDirection;
@@ -96,7 +95,6 @@ void TakeItem(GameData& gd);
 void RangedAttackExplosion(GameData& gd, Vector2 lastAttackedPosition);
 void CleanExplosion(GameData& gd, Vector2 lastAttackedPosition);
 bool isEnemyHitted(GameData& gd, Vector2 attackedPosition);
-void CleanTrail(GameData gd, Vector2 attackedPosition, Directions dir);
 
 void EnemyUpdate(GameData& gd);
 void EnemyDraw(GameData& gd);
