@@ -12,49 +12,12 @@ enum class EnemyStates
 struct Rock
 {
 	Directions direction{};
-	Vector2 position{};
-	Vector2 previousPosition{};
+	Vector2 position{ 0,0 };
+	Vector2 previousPosition{ 0,0 };
 	bool isFlying{ false };
 
 	int moveTimer{};
-	int moveCoolDown{ 30 };
-	void RockUpdate(TileMap mapOfTiles[32][97], MapType mapType, HANDLE handle)
-	{
-
-		previousPosition = position;
-		switch (direction)
-		{
-		case Directions::North:
-			position.y--;
-			break;
-		case Directions::South:
-			position.y++;
-			break;
-		case Directions::East:
-			position.x++;
-			break;
-		case Directions::West:
-			position.x--;
-			break;
-		}
-		if (!mapOfTiles[position.y][position.x].hasCollision)
-		{
-			RockDraw(mapType, handle);
-			CleanTrail(handle, previousPosition);
-		}
-		else
-			isFlying = false;
-	}
-	void RockDraw(MapType mapType, HANDLE handle)
-	{
-		if (mapType == MapType::OverWorld || mapType == MapType::Mountain)
-			SetConsoleTextAttribute(handle, 236);
-		else
-			SetConsoleTextAttribute(handle, 12);
-
-		SetConsoleCursorPosition(handle, { static_cast<short>(position.x), static_cast<short>(position.y) });
-		cout << "O";
-	}
+	int moveCoolDown{ 40 };
 };
 
 enum class EnemyType
@@ -73,28 +36,28 @@ struct Enemy
 	bool isMoving{ false };
 	int moveCoolDown{ 80 };
 	int moveTimer{};
-	bool hasChangedOnLastFrame{ false };
+	bool hasChangedOnLastFrame{ true };
 	EnemyType enemyType{ EnemyType::Spider };
 	EnemyStates state{ EnemyStates::Idle };
 	int stateChangeTime{};
 	int timer{ 0 };
+
+	int rotationCoolDown{ 150 };
+	Rock rock{};
+
 	void TakeDamage(int damage)
 	{
 		HealthPoints -= damage;
 		if (HealthPoints <= 0)
 			isAlive = false;
 	}
-
 };
 struct Octorok : Enemy
 {
-
 	Directions dir{ Directions::North };
-	int rotationCoolDown{ 250 };
-	int rotationTimer{};
+	int rotationTimer = 0;
 	int qtyOfMoves{ 0 };
-	Rock rock;
-
+	bool hasShooted{ false };
 	void Move(TileMap mapOfTiles[32][97])
 	{
 		previousPosition = position;
@@ -102,27 +65,51 @@ struct Octorok : Enemy
 		{
 		case Directions::North:
 			if (!mapOfTiles[position.y - 1][position.x].hasCollision)
+			{
 				position.y--;
+				qtyOfMoves--;
+			}
 			else
+			{
 				qtyOfMoves = 0;
+				isMoving = false;
+			}
 			break;
 		case Directions::South:
 			if (!mapOfTiles[position.y + 1][position.x].hasCollision)
+			{
 				position.y++;
+				qtyOfMoves--;
+			}
 			else
+			{
 				qtyOfMoves = 0;
+				isMoving = false;
+			}
 			break;
 		case Directions::West:
 			if (!mapOfTiles[position.y][position.x - 1].hasCollision)
+			{
 				position.x--;
+				qtyOfMoves--;
+			}
 			else
+			{
 				qtyOfMoves = 0;
+				isMoving = false;
+			}
 			break;
 		case Directions::East:
 			if (!mapOfTiles[position.y][position.x + 1].hasCollision)
+			{
 				position.x++;
+				qtyOfMoves--;
+			}
 			else
+			{
 				qtyOfMoves = 0;
+				isMoving = false;
+			}
 			break;
 		default:
 			break;
@@ -134,34 +121,48 @@ struct Octorok : Enemy
 		int newDir = rand() % 4;
 		dir = static_cast<Directions>(newDir);
 		hasChangedOnLastFrame = true;
-		rotationTimer = clock() + rotationCoolDown;
 	}
-	void Shoot()
+	void Shoot(TileMap mapOfTiles[32][97])
 	{
+		hasChangedOnLastFrame = true;
+		hasShooted = true;
 		rock.direction = dir;
 		switch (dir)
 		{
 		case Directions::North:
-			rock.position = { position.x, position.y - 1 };
-			break;
-		case Directions::East:
-			rock.position = { position.x + 1, position.y };
-			break;
-		case Directions::West:
-			rock.position = { position.x - 1, position.y };
+			if (!mapOfTiles[position.y - 1][position.x].hasCollision)
+			{
+				rock.position = { position.x, position.y - 1 };
+				rock.moveTimer = clock() + rock.moveCoolDown;
+				rock.isFlying = true;
+			}
 			break;
 		case Directions::South:
-			rock.position = { position.x, position.y + 1 };
+			if (!mapOfTiles[position.y + 1][position.x].hasCollision)
+			{
+				rock.position = { position.x, position.y + 1 };
+				rock.moveTimer = clock() + rock.moveCoolDown;
+				rock.isFlying = true;
+			}
 			break;
-		default:
+		case Directions::East:
+			if (!mapOfTiles[position.y][position.x + 1].hasCollision)
+			{
+				rock.position = { position.x + 1, position.y };
+				rock.moveTimer = clock() + rock.moveCoolDown;
+				rock.isFlying = true;
+			}
+			break;
+		case Directions::West:
+			if (!mapOfTiles[position.y][position.x - 1].hasCollision)
+			{
+				rock.position = { position.x - 1, position.y };
+				rock.moveTimer = clock() + rock.moveCoolDown;
+				rock.isFlying = true;
+			}
 			break;
 		}
-		rock.moveTimer = clock() + rock.moveCoolDown;
-		//rock.position = position;
-		rock.isFlying = true;
 	}
-
-
 };
 
 struct Spider : Enemy
@@ -180,5 +181,3 @@ struct Spider : Enemy
 	}
 };
 
-//void RockUpdate(Rock& rock, TileMap mapOfTiles[32][97], MapType mapType, HANDLE handle);
-//void RockDraw(Rock& rock, MapType mapType, HANDLE handle);

@@ -1,9 +1,9 @@
 #include "Utilities.h"
 
-void CleanTrail(HANDLE handle, Vector2 attackedPosition)
+void CleanTrail(HANDLE handle, Vector2 attackedPosition, float timeToMove)
 {
 	float time = clock();
-	float timer = time + 20;
+	float timer = time + timeToMove;
 	while (time < timer)
 	{
 		time = clock();

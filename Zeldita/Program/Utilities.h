@@ -25,6 +25,15 @@ struct Vector2
 	int y;
 };
 
+enum class Scenes
+{
+	Menu,
+	Game,
+	GameOver,
+	Credits,
+	End
+};
+
 struct TileMap
 {
 	bool hasCollision;
@@ -45,4 +54,11 @@ enum class MapNames
 	Count
 };
 
-void CleanTrail(HANDLE handle, Vector2 attackedPosition);
+struct Map
+{
+	MapNames name{};
+	string* mapGraphic{};
+	bool isCaveItemTaken = false;
+	MapType mapType{};
+};
+void CleanTrail(HANDLE handle, Vector2 attackedPosition, float timeToMove);

@@ -259,10 +259,6 @@ void GameUpdate(GameData& gd)
 		{
 			PlayerAttack(gd);
 		}
-		else if (pressedKey == 'c' && gd.player.hasShield)
-		{
-			PlayerParry(gd);
-		}
 		if (mapPrevFrame.name != gd.actualMap.name)
 			gd.isArtPrinted = false;
 	}
@@ -353,78 +349,85 @@ void GameOverDraw(GameData& gd)
 
 void EnemyUpdate(GameData& gd)
 {
-	for (Enemy& enemy : gd.enemies)
+	int randomNum = 0;
+	for (int i = 0; i < gd.actualEnemies; i++)
 	{
-		if (!enemy.isAlive)
-			enemy = gd.deadEnemy;
+		if (!gd.enemies[i].isAlive)
+			gd.enemies[i] = gd.deadEnemy;
 
-		if (enemy.isActiveEnemy && enemy.isAlive)
+		if (gd.enemies[i].isActiveEnemy && gd.enemies[i].isAlive)
 		{
-			enemy.hasChangedOnLastFrame = false;
-			if (enemy.stateChangeTime == 0)
+			gd.enemies[i].hasChangedOnLastFrame = false;
+			if (gd.enemies[i].stateChangeTime == 0)
 			{
-				enemy.stateChangeTime = clock() + (rand() % 250 + 50);
+				gd.enemies[i].stateChangeTime = clock() + (rand() % 400 + 50);
 			}
 
-			if (clock() >= enemy.stateChangeTime)
+			if (clock() >= gd.enemies[i].stateChangeTime)
 			{
-				enemy.stateChangeTime = 0;
+				gd.enemies[i].stateChangeTime = 0;
 
-				if (enemy.enemyType == EnemyType::Spider)
+				if (gd.enemies[i].enemyType == EnemyType::Spider)
 				{
-					enemy.state = static_cast<EnemyStates>(rand() % 2);
+					randomNum = rand() % 2;
+					gd.enemies[i].state = static_cast<EnemyStates>(randomNum);
 
-					if (enemy.state == EnemyStates::Move)
-						static_cast<Spider&>(enemy).Move(gd.mapOfTiles);
+					if (gd.enemies[i].state == EnemyStates::Move)
+						static_cast<Spider&>(gd.enemies[i]).Move(gd.mapOfTiles);
 				}
-				else if (enemy.enemyType == EnemyType::Octorok && !enemy.isMoving)
+				else if (gd.enemies[i].enemyType == EnemyType::Octorok)
 				{
-					enemy.state = static_cast<EnemyStates>(rand() % 3);
-					/// <summary>
-					/// ////////
-					/// </summary>
-					/// <param name="gd"></param>
-					switch (enemy.state)
+					randomNum = rand() % 3;
+					gd.enemies[i].state = static_cast<EnemyStates>(randomNum);
+					switch (gd.enemies[i].state)
 					{
 					case EnemyStates::Move:
-						static_cast<Octorok&>(enemy).qtyOfMoves = rand() % 3 + 1;
-						enemy.isMoving = true;
-						enemy.moveTimer = clock() + enemy.moveCoolDown;
-						break;
-					case EnemyStates::Rotate:
-						if (clock() >= static_cast<Octorok&>(enemy).rotationTimer)
-							static_cast<Octorok&>(enemy).Rotate();
+						static_cast<Octorok&>(gd.enemies[i]).qtyOfMoves = rand() % 3 + 1;
+						gd.enemies[i].isMoving = true;
+						gd.enemies[i].moveTimer = clock() + gd.enemies[i].moveCoolDown;
 						break;
 					case EnemyStates::Attack:
-						if (!static_cast<Octorok&>(enemy).rock.isFlying)
-							static_cast<Octorok&>(enemy).Shoot();
+						if (!static_cast<Octorok&>(gd.enemies[i]).hasShooted)
+						{
+							static_cast<Octorok&>(gd.enemies[i]).Shoot(gd.mapOfTiles);
+						}
+						break;
+					case EnemyStates::Rotate:
+						if (clock() >= static_cast<Octorok&>(gd.enemies[i]).rotationTimer)
+						{
+							static_cast<Octorok&>(gd.enemies[i]).Rotate();
+							static_cast<Octorok&>(gd.enemies[i]).rotationTimer = clock() + 150;
+						}
 						break;
 					default:
 						break;
 					}
 				}
 			}
-			if (enemy.isMoving && clock() >= enemy.moveTimer)
+			if (gd.enemies[i].isMoving && clock() >= gd.enemies[i].moveTimer)
 			{
-				if (enemy.enemyType == EnemyType::Octorok)
+				if (gd.enemies[i].enemyType == EnemyType::Octorok)
 				{
-					static_cast<Octorok&>(enemy).Move(gd.mapOfTiles);
-					static_cast<Octorok&>(enemy).qtyOfMoves--;
-					if (static_cast<Octorok&>(enemy).qtyOfMoves <= 0)
+					static_cast<Octorok&>(gd.enemies[i]).Move(gd.mapOfTiles);
+					if (static_cast<Octorok&>(gd.enemies[i]).qtyOfMoves <= 0)
 					{
-						enemy.isMoving = false;
-						static_cast<Octorok&>(enemy).qtyOfMoves = 0;
+						gd.enemies[i].isMoving = false;
+						static_cast<Octorok&>(gd.enemies[i]).qtyOfMoves = 0;
 					}
 				}
-				enemy.moveTimer = clock() + enemy.moveCoolDown;
+				gd.enemies[i].moveTimer = clock() + gd.enemies[i].moveCoolDown;
 			}
 		}
-		if (enemy.enemyType == EnemyType::Octorok)
+		if (gd.enemies[i].enemyType == EnemyType::Octorok && static_cast<Octorok&>(gd.enemies[i]).hasShooted)
 		{
-			if (static_cast<Octorok&>(enemy).rock.isFlying && clock() >= static_cast<Octorok&>(enemy).rock.moveTimer)
+			if (clock() >= gd.enemies[i].rock.moveTimer)
 			{
-				static_cast<Octorok&>(enemy).rock.RockUpdate(gd.mapOfTiles, gd.actualMap.mapType, gd.handle);
-				static_cast<Octorok&>(enemy).rock.moveTimer = clock() + static_cast<Octorok&>(enemy).rock.moveCoolDown;
+				RockUpdate(gd.enemies[i].rock, gd.mapOfTiles, static_cast<Octorok&>(gd.enemies[i]).hasShooted);
+				if (gd.player.position.x == gd.enemies[i].rock.position.x && gd.player.position.y == gd.enemies[i].rock.position.y)
+					gd.player.TakeDamage();
+				RockDraw(gd.enemies[i].rock, gd.actualMap.mapType, gd.handle);
+				CleanTrail(gd.handle, gd.enemies[i].rock.previousPosition, gd.enemies[i].rock.moveCoolDown);
+				gd.enemies[i].rock.moveTimer = clock() + gd.enemies[i].rock.moveCoolDown;
 			}
 		}
 	}
@@ -435,24 +438,24 @@ void EnemyDraw(GameData& gd)
 	if (gd.actualMap.mapType == MapType::OverWorld || gd.actualMap.mapType == MapType::Mountain)
 		SetConsoleTextAttribute(gd.handle, 236);
 
-	for (Enemy& enemy : gd.enemies)
+	for (int i = 0; i < gd.actualEnemies; i++)
 	{
-		if (enemy.isActiveEnemy && enemy.isAlive && enemy.hasChangedOnLastFrame)
+		if (gd.enemies[i].isActiveEnemy && gd.enemies[i].isAlive && gd.enemies[i].hasChangedOnLastFrame)
 		{
-			SetConsoleCursorPosition(gd.handle, { static_cast<short>(enemy.previousPosition.x),  static_cast<short>(enemy.previousPosition.y) });
+			SetConsoleCursorPosition(gd.handle, { static_cast<short>(gd.enemies[i].previousPosition.x),  static_cast<short>(gd.enemies[i].previousPosition.y) });
 			cout << " ";
-			SetConsoleCursorPosition(gd.handle, { static_cast<short>(enemy.position.x),  static_cast<short>(enemy.position.y) });
-			if (enemy.enemyType == EnemyType::Spider)
+			SetConsoleCursorPosition(gd.handle, { static_cast<short>(gd.enemies[i].position.x),  static_cast<short>(gd.enemies[i].position.y) });
+			if (gd.enemies[i].enemyType == EnemyType::Spider)
 				cout << "M";
-			else if (enemy.enemyType == EnemyType::Octorok)
+			else if (gd.enemies[i].enemyType == EnemyType::Octorok)
 			{
-				switch (static_cast<Octorok&>(enemy).dir)
+				switch (static_cast<Octorok&>(gd.enemies[i]).dir)
 				{
 				case Directions::North:
 					cout << "V";
 					break;
 				case Directions::East:
-					cout << "<";
+					cout << '<';
 					break;
 				case Directions::West:
 					cout << ">";
@@ -465,7 +468,6 @@ void EnemyDraw(GameData& gd)
 		}
 	}
 }
-
 
 //Utilities
 void Initialize(GameData gd)
@@ -962,18 +964,22 @@ void MapChange(GameData& gd, Directions dir)
 				else
 					spider[i].position = { 50,18 };
 			}
-			Enemy octorok;
+			Octorok octorok;
 			octorok.HealthPoints = 1;
+			octorok.rotationCoolDown = 150;
 			octorok.isActiveEnemy = true;
 			octorok.previousPosition = { 5, 20 };
 			octorok.position = { 5, 20 };
 			octorok.enemyType = EnemyType::Octorok;
 			octorok.isActiveEnemy = true;
 			octorok.isAlive = true;
+			octorok.isMoving = false;
 			gd.enemies[0] = spider[0];
 			gd.enemies[1] = spider[1];
 			gd.enemies[2] = spider[2];
 			gd.enemies[3] = octorok;
+
+			gd.actualEnemies = 4;
 		}
 		else if (dir == Directions::North)
 		{
@@ -1049,276 +1055,5 @@ void MapChange(GameData& gd, bool isCave)
 		gd.storedPosition = gd.player.position;
 		gd.player.position = { 48, 28 };
 		break;
-	}
-}
-
-void PlayerAttack(GameData& gd)
-{
-	if (gd.actualMap.mapType == MapType::OverWorld || gd.actualMap.mapType == MapType::Mountain)
-		SetConsoleTextAttribute(gd.handle, 233);
-	else
-		SetConsoleTextAttribute(gd.handle, 9);
-
-	Vector2 attackedPosition = { 0,0 };
-	if (gd.player.healthPoints == gd.player.maxHealthPoints && !gd.masterSword.isFlying)
-	{
-		gd.masterSword.direction = gd.player.direction;
-		gd.masterSword.position = gd.player.position;
-		gd.masterSword.isFlying = true;
-	}
-	else if (gd.player.healthPoints != gd.player.maxHealthPoints)
-	{
-		switch (gd.player.direction)
-		{
-		case Directions::North:
-			attackedPosition = { gd.player.position.x , gd.player.position.y - 1 };
-			break;
-		case Directions::South:
-			attackedPosition = { gd.player.position.x , gd.player.position.y + 1 };
-			break;
-		case Directions::East:
-			attackedPosition = { gd.player.position.x + 1 , gd.player.position.y };
-			break;
-		case Directions::West:
-			attackedPosition = { gd.player.position.x - 1 , gd.player.position.y };
-			break;
-		}
-		SetConsoleCursorPosition(gd.handle, { static_cast<short>(attackedPosition.x),  static_cast<short>(attackedPosition.y) });
-		if (attackedPosition.x != gd.player.position.x && !gd.mapOfTiles[attackedPosition.y][attackedPosition.x].hasCollision)
-			cout << static_cast<char>(45);
-		else if (!gd.mapOfTiles[attackedPosition.y][attackedPosition.x].hasCollision)
-			cout << static_cast<char>(124);
-		Sleep(40);
-
-		SetConsoleTextAttribute(gd.handle, 7);
-
-		isEnemyHitted(gd, attackedPosition);
-	}
-
-	gd.player.canAttack = true;
-}
-
-void SwordUpdate(GameData& gd)
-{
-	if (gd.actualMap.mapType == MapType::OverWorld || gd.actualMap.mapType == MapType::Mountain)
-		SetConsoleTextAttribute(gd.handle, 233);
-	else
-		SetConsoleTextAttribute(gd.handle, 9);
-
-	switch (gd.masterSword.direction)
-	{
-	case Directions::North:
-		if (gd.masterSword.position.y - 1 > 0 && !gd.mapOfTiles[gd.masterSword.position.y - 1][gd.masterSword.position.x].hasCollision)
-		{
-			gd.masterSword.position.y--;
-			SetConsoleCursorPosition(gd.handle, { static_cast<short>(gd.masterSword.position.x),  static_cast<short>(gd.masterSword.position.y) });
-			cout << static_cast<char>(124);
-			if (gd.masterSword.position.y != gd.player.position.y - 1)
-				CleanTrail(gd.handle, gd.masterSword.position);
-
-			isEnemyHitted(gd, gd.masterSword.position);
-		}
-		else
-			gd.masterSword.isFlying = false;
-		break;
-	case Directions::South:
-		if (gd.masterSword.position.y < 30 && !gd.mapOfTiles[gd.masterSword.position.y + 1][gd.masterSword.position.x].hasCollision)
-		{
-			gd.masterSword.position.y++;
-			SetConsoleCursorPosition(gd.handle, { static_cast<short>(gd.masterSword.position.x),  static_cast<short>(gd.masterSword.position.y) });
-			cout << static_cast<char>(124);
-
-			if (gd.masterSword.position.y != gd.player.position.y + 1)
-				CleanTrail(gd.handle, gd.masterSword.position);
-
-			isEnemyHitted(gd, gd.masterSword.position);
-		}
-		else
-			gd.masterSword.isFlying = false;
-		break;
-	case Directions::East:
-		if (gd.masterSword.position.x + 1 < 95 && !gd.mapOfTiles[gd.masterSword.position.y][gd.masterSword.position.x + 1].hasCollision)
-		{
-			gd.masterSword.position.x++;
-			SetConsoleCursorPosition(gd.handle, { static_cast<short>(gd.masterSword.position.x),  static_cast<short>(gd.masterSword.position.y) });
-			cout << static_cast<char>(45);
-
-			if (gd.masterSword.position.x != gd.player.position.x + 1)
-				CleanTrail(gd.handle, gd.masterSword.position);
-
-			isEnemyHitted(gd, gd.masterSword.position);
-		}
-		else
-			gd.masterSword.isFlying = false;
-		break;
-	case Directions::West:
-		if (gd.masterSword.position.x - 1 > 0 && !gd.mapOfTiles[gd.masterSword.position.y][gd.masterSword.position.x - 1].hasCollision)
-		{
-			gd.masterSword.position.x--;
-			SetConsoleCursorPosition(gd.handle, { static_cast<short>(gd.masterSword.position.x),  static_cast<short>(gd.masterSword.position.y) });
-			cout << static_cast<char>(45);
-
-			if (gd.masterSword.position.x != gd.player.position.x - 1)
-				CleanTrail(gd.handle, gd.masterSword.position);
-
-			isEnemyHitted(gd, gd.masterSword.position);
-		}
-		else
-			gd.masterSword.isFlying = false;
-		break;
-	}
-	if (!gd.masterSword.isFlying)
-	{
-		RangedAttackExplosion(gd, gd.masterSword.position);
-		CleanTrail(gd.handle, gd.masterSword.position);
-	}
-}
-void RangedAttackExplosion(GameData& gd, Vector2 lastAttackedPosition)
-{
-	for (int i = 1; i <= 2; i++)
-	{
-		if (!gd.mapOfTiles[lastAttackedPosition.y - i][lastAttackedPosition.x - i].hasCollision)
-		{
-			SetConsoleCursorPosition(gd.handle, { static_cast<short>(lastAttackedPosition.x - i),  static_cast<short>(lastAttackedPosition.y - i) });
-			cout << static_cast<char>(92);
-			isEnemyHitted(gd, { lastAttackedPosition.x - i, lastAttackedPosition.y - i });
-		}
-		if (!gd.mapOfTiles[lastAttackedPosition.y - i][lastAttackedPosition.x + i].hasCollision)
-		{
-			SetConsoleCursorPosition(gd.handle, { static_cast<short>(lastAttackedPosition.x + i),  static_cast<short>(lastAttackedPosition.y - i) });
-			cout << static_cast<char>(47);
-			isEnemyHitted(gd, { lastAttackedPosition.x + i, lastAttackedPosition.y - i });
-		}
-		if (!gd.mapOfTiles[lastAttackedPosition.y + i][lastAttackedPosition.x - i].hasCollision)
-		{
-			SetConsoleCursorPosition(gd.handle, { static_cast<short>(lastAttackedPosition.x - i),  static_cast<short>(lastAttackedPosition.y + i) });
-			cout << static_cast<char>(47);
-			isEnemyHitted(gd, { lastAttackedPosition.x - i, lastAttackedPosition.y + i });
-		}
-		if (!gd.mapOfTiles[lastAttackedPosition.y + i][lastAttackedPosition.x + i].hasCollision)
-		{
-			SetConsoleCursorPosition(gd.handle, { static_cast<short>(lastAttackedPosition.x + i),  static_cast<short>(lastAttackedPosition.y + i) });
-			cout << static_cast<char>(92);
-			isEnemyHitted(gd, { lastAttackedPosition.x + i, lastAttackedPosition.y + i });
-		}
-	}
-	CleanExplosion(gd, lastAttackedPosition);
-}
-void CleanExplosion(GameData& gd, Vector2 lastAttackedPosition)
-{
-	float time;
-	float timer;
-	for (int i = 1; i <= 2; i++)
-	{
-		time = clock();
-		timer = time + 50;
-		while (time < timer)
-		{
-			time = clock();
-		}
-		if (!gd.mapOfTiles[lastAttackedPosition.y - i][lastAttackedPosition.x - i].hasCollision)
-		{
-			SetConsoleCursorPosition(gd.handle, { static_cast<short>(lastAttackedPosition.x - i),  static_cast<short>(lastAttackedPosition.y - i) });
-			cout << ' ';
-		}
-		if (!gd.mapOfTiles[lastAttackedPosition.y - i][lastAttackedPosition.x + i].hasCollision)
-		{
-			SetConsoleCursorPosition(gd.handle, { static_cast<short>(lastAttackedPosition.x + i),  static_cast<short>(lastAttackedPosition.y - i) });
-			cout << ' ';
-		}
-		if (!gd.mapOfTiles[lastAttackedPosition.y + i][lastAttackedPosition.x - i].hasCollision)
-		{
-			SetConsoleCursorPosition(gd.handle, { static_cast<short>(lastAttackedPosition.x - i),  static_cast<short>(lastAttackedPosition.y + i) });
-			cout << ' ';
-		}
-		if (!gd.mapOfTiles[lastAttackedPosition.y + i][lastAttackedPosition.x + i].hasCollision)
-		{
-			SetConsoleCursorPosition(gd.handle, { static_cast<short>(lastAttackedPosition.x + i),  static_cast<short>(lastAttackedPosition.y + i) });
-			cout << ' ';
-		}
-	}
-}
-
-bool isEnemyHitted(GameData& gd, Vector2 attackedPosition)
-{
-	for (int i = 0; i < gd.MAX_ENEMIES; i++)
-	{
-		if (gd.enemies[i].position.x == attackedPosition.x && gd.enemies[i].position.y == attackedPosition.y)
-		{
-			gd.enemies[i].TakeDamage(gd.player.attackDamage);
-			return true;
-		}
-	}
-}
-void PlayerParry(GameData& gd)
-{
-	if (gd.actualMap.mapType == MapType::OverWorld || gd.actualMap.mapType == MapType::Mountain)
-		SetConsoleTextAttribute(gd.handle, 233);
-	else
-		SetConsoleTextAttribute(gd.handle, 9);
-
-
-	Vector2 parryPosition = { 0,0 };
-	switch (gd.player.direction)
-	{
-	case Directions::North:
-		parryPosition = { gd.player.position.x , gd.player.position.y - 1 };
-		break;
-	case Directions::South:
-		parryPosition = { gd.player.position.x , gd.player.position.y + 1 };
-		break;
-	case Directions::East:
-		parryPosition = { gd.player.position.x + 1 , gd.player.position.y };
-		break;
-	case Directions::West:
-		parryPosition = { gd.player.position.x - 1 , gd.player.position.y };
-		break;
-	}
-	SetConsoleCursorPosition(gd.handle, { static_cast<short>(parryPosition.x),  static_cast<short>(parryPosition.y) });
-	if (parryPosition.x != gd.player.position.x && !gd.mapOfTiles[parryPosition.y][parryPosition.x].hasCollision)
-		cout << static_cast<char>(124);
-	else if (!gd.mapOfTiles[parryPosition.y][parryPosition.x].hasCollision)
-		cout << static_cast<char>(45);
-	Sleep(40);
-
-	SetConsoleTextAttribute(gd.handle, 7);
-}
-void TakeItem(GameData& gd)
-{
-	if (gd.actualMap.name == MapNames::Cave1)
-	{
-		gd.maps[static_cast<int>(MapNames::Cave1)].isCaveItemTaken = true;
-		gd.maps[static_cast<int>(MapNames::Cave1)].mapGraphic[13] = R"(%&@%%%%@%%%%                                                                     %@%@%@%@%@%)";
-
-		gd.player.hasSword = true;
-		SetConsoleCursorPosition(gd.handle, { 46,17 });
-		for (int i = 0; i < 5; i++)
-		{
-			gd.mapOfTiles[17][46 + i].hasCollision = false;
-		}
-		cout << "     ";
-	}
-	else if (gd.actualMap.name == MapNames::Cave2)
-	{
-		gd.maps[static_cast<int>(MapNames::Cave2)].isCaveItemTaken = true;
-
-		for (int i = 11; i < 15; i++)
-		{
-			if (i == 11)
-				gd.maps[static_cast<int>(MapNames::Cave2)].mapGraphic[i] = R"(@@@%%&@@@&%@            #$                                           #$          &@@@%@@@@@%)";
-			else
-				gd.maps[static_cast<int>(MapNames::Cave2)].mapGraphic[i] = R"(%&@%%%%@%%%%                                                                     %@%@%@%@%@%)";
-		}
-
-		gd.player.hasShield = true;
-		for (int i = 0; i < 5; i++)
-		{
-			for (int j = 15; j < 19; j++)
-			{
-				gd.mapOfTiles[j][46 + i].hasCollision = false;
-				SetConsoleCursorPosition(gd.handle, { 46,static_cast<short>(j) });
-				cout << "     ";
-			}
-		}
 	}
 }

@@ -1,5 +1,5 @@
 #pragma once
-#include "Enemies.h"
+#include "Utilities.h"
 
 struct Player
 {
@@ -12,7 +12,7 @@ struct Player
 	bool isAlive{ true };
 	bool canTakeDamage{ true };
 	bool canAttack{ true };
-	int receiveDamageCoolDown{1500};
+	int receiveDamageCoolDown{ 1500 };
 	int timer = 0;
 	Directions direction{};
 	Vector2 position{};
@@ -31,5 +31,6 @@ struct Sword
 {
 	Directions direction{};
 	Vector2 position{};
-	bool isFlying{false};
+	bool isFlying{ false };
+	int moveCoolDown{ 20 };
 };
