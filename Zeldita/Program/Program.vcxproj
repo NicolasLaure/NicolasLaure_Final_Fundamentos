@@ -139,7 +139,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Enemies.cpp" />
     <ClCompile Include="EnemyUtilities.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PlayerUtilities.cpp" />

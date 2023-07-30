@@ -51,6 +51,7 @@ enum class MapNames
 	Cave1,
 	Cave2,
 	Mountain1,
+	FairysFountain,
 	Count
 };
 
@@ -60,5 +61,10 @@ struct Map
 	string* mapGraphic{};
 	bool isCaveItemTaken = false;
 	MapType mapType{};
+};
+
+struct Item
+{
+	Vector2 position{};
 };
 void CleanTrail(HANDLE handle, Vector2 attackedPosition, float timeToMove);

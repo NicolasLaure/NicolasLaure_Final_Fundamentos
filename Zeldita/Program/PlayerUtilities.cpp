@@ -213,7 +213,7 @@ void TakeItem(GameData& gd)
 	{
 		gd.maps[static_cast<int>(MapNames::Cave2)].isCaveItemTaken = true;
 
-		for (int i = 11; i < 15; i++)
+		for (int i = 11; i < 16; i++)
 		{
 			if (i == 11)
 				gd.maps[static_cast<int>(MapNames::Cave2)].mapGraphic[i] = R"(@@@%%&@@@&%@            #$                                           #$          &@@@%@@@@@%)";
@@ -221,15 +221,34 @@ void TakeItem(GameData& gd)
 				gd.maps[static_cast<int>(MapNames::Cave2)].mapGraphic[i] = R"(%&@%%%%@%%%%                                                                     %@%@%@%@%@%)";
 		}
 
-		gd.player.hasShield = true;
+		gd.player.hasTriforce = true;
 		for (int i = 0; i < 5; i++)
 		{
-			for (int j = 15; j < 19; j++)
+			for (int j = 15; j < 20; j++)
 			{
 				gd.mapOfTiles[j][46 + i].hasCollision = false;
-				SetConsoleCursorPosition(gd.handle, { 46,static_cast<short>(j) });
-				cout << "     ";
+				SetConsoleCursorPosition(gd.handle, { 44,static_cast<short>(j) });
+				cout << "           ";
 			}
 		}
+	}
+	else if (gd.actualMap.name == MapNames::FairysFountain)
+	{
+		SetConsoleTextAttribute(gd.handle, 233);
+		gd.player.healthPoints = gd.player.maxHealthPoints;
+		for (int i = 11; i <= 13; i++)
+		{
+			SetConsoleCursorPosition(gd.handle, { 17, static_cast<short>(i + 4) });
+			cout << "    ";
+			SetConsoleCursorPosition(gd.handle, { 76, static_cast<short>(i + 4) });
+			cout << "    ";
+		}
+
+		for (int i = 17; i <= 19; i++)
+		{
+			SetConsoleCursorPosition(gd.handle, { 47, static_cast<short>(i + 4) });
+			cout << "    ";
+		}
+		SetConsoleTextAttribute(gd.handle, 7);
 	}
 }

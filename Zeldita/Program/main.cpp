@@ -288,7 +288,6 @@ void GameDraw(GameData& gd)
 	}
 	if (gd.playerLivesPrevFrame != gd.player.healthPoints)
 	{
-		//CleanUpperBar(gd);
 		PrintUpperBar(gd);
 	}
 
@@ -551,6 +550,7 @@ void PrintMap(GameData& gd, Map map, int MAP_HEIGHT)
 		bool isBetweenBraces = false;
 		for (int j = 0; j < mapWidth; j++)
 		{
+			gd.mapOfTiles[i + 4][j + 2].isItem = false;
 			if (map.mapGraphic[i][j] == 91)
 				isBetweenBraces = true;
 			if (map.mapGraphic[i][j] == 93)
@@ -560,16 +560,6 @@ void PrintMap(GameData& gd, Map map, int MAP_HEIGHT)
 			{
 				gd.mapOfTiles[i + 4][j + 2].isCaveEntrance = false;
 				gd.mapOfTiles[i + 4][j + 2].hasCollision = true;
-				if (gd.actualMap.name == MapNames::Cave1)
-				{
-					if (map.mapGraphic[i][j] == '>' || map.mapGraphic[i][j] == '-')
-						gd.mapOfTiles[i + 4][j + 2].isItem = true;
-				}
-				else if (gd.actualMap.name == MapNames::Cave2)
-				{
-					if (map.mapGraphic[i][j] == '_' || map.mapGraphic[i][j] == '/' || map.mapGraphic[i][j] == 92)
-						gd.mapOfTiles[i + 4][j + 2].isItem = true;
-				}
 			}
 			else if (map.mapGraphic[i][j] == ' ' && isBetweenBraces)
 			{
@@ -578,6 +568,45 @@ void PrintMap(GameData& gd, Map map, int MAP_HEIGHT)
 			}
 			else
 				gd.mapOfTiles[i + 4][j + 2].hasCollision = false;
+
+
+			if (gd.actualMap.name == MapNames::Cave1)
+			{
+				if (map.mapGraphic[i][j] == '>' || map.mapGraphic[i][j] == '-')
+					gd.mapOfTiles[i + 4][j + 2].isItem = true;
+			}
+			else if (gd.actualMap.name == MapNames::Cave2)
+			{
+				if (map.mapGraphic[i][j] == '_' || (map.mapGraphic[i][j] == 92 || map.mapGraphic[i][j] == '/') && i >= 12)
+					gd.mapOfTiles[i + 4][j + 2].isItem = true;
+			}
+			else if (gd.actualMap.name == MapNames::FairysFountain)
+			{
+				if (i == 11 || i == 12)
+				{
+					if (j >= 15 && j <= 18)
+						gd.mapOfTiles[i + 4][j + 2].isItem = true;
+					else if (j >= 74 && j <= 77)
+						gd.mapOfTiles[i + 4][j + 2].isItem = true;
+				}
+				else if (i == 13)
+				{
+					if (j == 16 || j == 17)
+						gd.mapOfTiles[i + 4][j + 2].isItem = true;
+					else if (j == 75 || j == 76)
+						gd.mapOfTiles[i + 4][j + 2].isItem = true;
+				}
+				else if (i == 17 || i == 18)
+				{
+					if (j >= 45 && j <= 48)
+						gd.mapOfTiles[i + 4][j + 2].isItem = true;
+				}
+				else if (i == 19)
+				{
+					if (j == 46 || j == 47)
+						gd.mapOfTiles[i + 4][j + 2].isItem = true;
+				}
+			}
 
 			if (gd.mapOfTiles[i + 4][j + 2].hasCollision)
 			{
@@ -588,14 +617,30 @@ void PrintMap(GameData& gd, Map map, int MAP_HEIGHT)
 					if (map.mapType == MapType::OverWorld)
 					{
 						if (gd.actualMap.name == MapNames::WesternRiver && map.mapGraphic[i][j] == '.')
-							SetConsoleTextAttribute(gd.handle, 23);
+							SetConsoleTextAttribute(gd.handle, 27);
 						else
 							SetConsoleTextAttribute(gd.handle, 32);
 					}
 					else if (map.mapType == MapType::Cave)
 						SetConsoleTextAttribute(gd.handle, 4);
-					else
-						SetConsoleTextAttribute(gd.handle, 6);
+					else if (map.mapType == MapType::Mountain)
+					{
+						if (gd.actualMap.name == MapNames::FairysFountain)
+						{
+							if (map.mapGraphic[i][j] == '.')
+								SetConsoleTextAttribute(gd.handle, 27);
+							else if (i == 10 && j == 46)
+								SetConsoleTextAttribute(gd.handle, 22);
+							else if (i == 11 && j >= 44 && j <= 48)
+								SetConsoleTextAttribute(gd.handle, 22);
+							else if (i == 12 && (j == 45 || j == 47))
+								SetConsoleTextAttribute(gd.handle, 22);
+							else
+								SetConsoleTextAttribute(gd.handle, 6);
+						}
+						else
+							SetConsoleTextAttribute(gd.handle, 6);
+					}
 				}
 			}
 			else
@@ -605,6 +650,17 @@ void PrintMap(GameData& gd, Map map, int MAP_HEIGHT)
 				else if (map.mapType == MapType::Cave)
 					SetConsoleTextAttribute(gd.handle, 7);
 			}
+
+			if (gd.mapOfTiles[i + 4][j + 2].isItem)
+			{
+				if (gd.actualMap.name == MapNames::Cave1)
+					SetConsoleTextAttribute(gd.handle, 9);
+				if (gd.actualMap.name == MapNames::Cave2)
+					SetConsoleTextAttribute(gd.handle, 14);
+				else if (gd.actualMap.name == MapNames::FairysFountain)
+					SetConsoleTextAttribute(gd.handle, 192);
+			}
+
 
 
 			cout << map.mapGraphic[i][j];
@@ -876,16 +932,16 @@ void MapsSetup(GameData& gd, Map maps[], int mapQty, int mapSize)
 			R"(@%@%%@@%%%%%%&%%%&%@%%%@%@%%@@%@%%@@%&%%%&%%%%%@%%%@%@%%@@%@%%@@%@%%&@%%%%%%@%%%@%@%%&@%@%%@)",
 			R"(@@@%%&@@@&%@%@@@%@%@@@%@@@@@%@@@%&%@@@%%@&@@%@%@@@%@&@@@%@@@&@%@@@%%@@@@@%@%@@@%@&@@@%@@@@@%)",
 			R"(%%@%%@%%@%%%                                                                     %@%%@@%@%%@)",
-			R"(%&@%%%%@%%%%                    Take         This        Shield,                 %@%@%@%@%@%)",
-			R"(%&@%@@%@@%@%         It'll    allow   you   to   parry   enemy   proyectiles     %@@@@%%@@@@)",
+			R"(%&@%%%%@%%%%                  Take           The         Triforce,               %@%@%@%@%@%)",
+			R"(%&@%@@%@@%@%     It'll  allow  you  to  save  Zelda  at  the  temple  of time    %@@@@%%@@@@)",
 			R"(%%@%&&%%%%&@                                  A                                  %@%&&@%@%&&)",
 			R"(%&%@%&%%%@%@            #$                   MMM                     #$          @%@@%@@%@@&)",
 			R"(@%@%%@@%%%%%           &%&%                  / \                    &%&%         %@%%&@%@%%@)",
-			R"(@@@%%&@@@&%@            #$                   ___                     #$          &@@@%@@@@@%)",
-			R"(%%@%%@%%@%%%                                / ^ \                                %@%%@@%@%%@)",
-			R"(%&@%%%%@%%%%                                \^ ^/                                %@%@%@%@%@%)",
-			R"(%&@%@@%@@%@%                                 \_/                                 %@@@@%%@@@@)",
-			R"(%%@%&&%%%%&@                                                                     %@%&&@%@%&&)",
+			R"(@@@%%&@@@&%@            #$                                           #$          &@@@%@@@@@%)",
+			R"(%%@%%@%%@%%%                                 /\                                  %@%%@@%@%%@)",
+			R"(%&@%%%%@%%%%                                /__\                                 %@%@%@%@%@%)",
+			R"(%&@%@@%@@%@%                               /\  /\                                %@@@@%%@@@@)",
+			R"(%%@%&&%%%%&@                              /__\/__\                               %@%&&@%@%&&)",
 			R"(%&%@%&%%%@%@                                                                     @%@@%@@%@@&)",
 			R"(@%@%%@@%%%%%                                                                     %@%%&@%@%%@)",
 			R"(@@@%%&@@@&%@                                                                     &@@@%@@@@@%)",
@@ -931,6 +987,38 @@ void MapsSetup(GameData& gd, Map maps[], int mapQty, int mapSize)
 			maps[i].mapType = MapType::Mountain;
 		}
 		break;
+		case MapNames::FairysFountain:
+			maps[i].name = MapNames::FairysFountain;
+			maps[i].mapGraphic = new string[25]
+			{
+				R"((/(#@(#,(#@(#%(%@(%%(%&(%,(&%(&,(&#(&*(@((@*(@/(@/(@*(@((@,(@((@%(@((@%(@((@,(@((@*(@((@*(@()",
+				R"(@/((#(@(((#(@(((#(@(((#(@(((%(@(((%(@(((%(@(/(%(@(/(%(&(*(%(%(*(&(#(,(%(((@(%(/(@(%#*(@(##,()",
+				R"(*/%*@(**%*@//*&*@*/*&*@,//@*&*(/@*&@((@*%,(#@*%,(#@*#*(%@/(*(%@((/(&@#(((%@%(((%@%#((#@&#((#)",
+				R"((/(/%(#((/%(#((/%(%((/%(%((/%(&((/%(@((/%(@((/%(@((/%(&((/%(%(((%(#(((%((((##(/((##(*((##(,()",
+				R"(((@(&%((@(@&((@(@&((@(&@((@(%@(#@(#@(#&((&(#%(/%(##(*#(#((,((#/(@/(#*(@*(%,(,@(%@(*@(%@(*,(&)",
+				R"((/((#@#(@(@                                                                       *#/(&(/(@()",
+				R"(@##(%(#((                                                                           %&@*/&,()",
+				R"(&%(&&                           ...............................                         *#@/)",
+				R"(#/((&                         ..................................                        *#,()",
+				R"(((@(@                        ...................................                        *((&)",
+				R"((/((#                        .................O.................                        *(,()",
+				R"(*#&(@          /\/\          ...............\\W//...............          /\/\          ,(*%)",
+				R"((/(##          \  /          ................/.\................          \  /          ,(@()",
+				R"(@/((#           \/           ...................................           \/           *#,()",
+				R"(&&(&%                        ...................................                        *#&/)",
+				R"((/(/@                        ...................................                        *(,()",
+				R"(((@(@                         ..................................                        **(@)",
+				R"((/((#                                        /\/\                                       *(,()",
+				R"(,%%(&                                        \  /                                       *&&%)",
+				R"((/(#%@#,                                      \/                                     ,(#*(@()",
+				R"(@/(((((@%(,                                                                        *#&((*#,()",
+				R"(*//*@(@#(@*                                                                        (#&@#((#/)",
+				R"((/(@@(#((@@*(@/((/(@/(#((@((#((@((%((@((%            ((@((@((@((@((@((&((&((%((%((&(*((&*(,()",
+				R"(((@(@%((@(@#(@,&(#(@,%##(@,%#((@,#%((@*#%            ((@((@((@#(@((@%(@((&&(@((%@(&@(@@(*,(@)",
+				R"((/((#*#/((#*#*(((/%/((#(%/((#(&/((%(&/((%            (@((#@(&((%@(&((%&(%((&%(#((&#(#((@(((()"
+			};
+			maps[i].mapType = MapType::Mountain;
+			break;
 		default:
 			break;
 		}
@@ -996,6 +1084,7 @@ void MapChange(GameData& gd, Directions dir)
 		break;
 	case MapNames::Cave1:
 	case MapNames::Cave2:
+	case MapNames::FairysFountain:
 		if (dir == Directions::South)
 		{
 			gd.actualMap = gd.previousMap;
@@ -1016,8 +1105,18 @@ void MapChange(GameData& gd, Directions dir)
 		}
 		break;
 	case MapNames::WesternRiver:
-		gd.actualMap = gd.maps[static_cast<int>(MapNames::StartValley)];
-		gd.player.position = gd.storedPosition;
+		if (dir == Directions::East)
+		{
+			gd.player.position = { 2, 17 };
+			gd.actualMap = gd.maps[static_cast<int>(MapNames::StartValley)];
+		}
+		else if (dir == Directions::North)
+		{
+			gd.previousMap = gd.actualMap;
+			gd.storedPosition = gd.player.position;
+			gd.actualMap = gd.maps[static_cast<int>(MapNames::FairysFountain)];
+			gd.player.position = { 45, 28 };
+		}
 		break;
 	case MapNames::HyruleField:
 		if (dir == Directions::North)

@@ -8,7 +8,7 @@ struct Player
 	char graphic = 'C';
 	int attackDamage = 1;
 	bool hasSword{ false };
-	bool hasShield{ false };
+	bool hasTriforce{ false };
 	bool isAlive{ true };
 	bool canTakeDamage{ true };
 	bool canAttack{ true };
