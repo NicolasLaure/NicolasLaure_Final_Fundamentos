@@ -16,9 +16,12 @@ enum class MapType
 {
 	OverWorld,
 	Mountain,
+	Castle,
+	CastleEntrance,
 	Cave,
 	Counter
 };
+
 struct Vector2
 {
 	int x;
@@ -30,7 +33,6 @@ enum class Scenes
 	Menu,
 	Game,
 	GameOver,
-	Credits,
 	End
 };
 
@@ -38,8 +40,10 @@ struct TileMap
 {
 	bool hasCollision;
 	bool isCaveEntrance;
+	bool isCastleEntrance;
 	bool isEndOfMap;
 	bool isItem;
+	bool isTriforceLogo;
 };
 
 enum class MapNames
@@ -52,6 +56,8 @@ enum class MapNames
 	Cave2,
 	Mountain1,
 	FairysFountain,
+	CastleEntrance,
+	HyruleCastle,
 	Count
 };
 
@@ -67,4 +73,5 @@ struct Item
 {
 	Vector2 position{};
 };
+
 void CleanTrail(HANDLE handle, Vector2 attackedPosition, float timeToMove);

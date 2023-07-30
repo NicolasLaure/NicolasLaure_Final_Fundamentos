@@ -9,6 +9,7 @@ void Menu(GameData& gd);
 void MenuStart(GameData& gd);
 void MenuUpdate(GameData& gd);
 void MenuDraw(GameData& gd);
+void Rules(GameData& gd);
 
 void Game(GameData& gd);
 void GameStart(GameData& gd);
