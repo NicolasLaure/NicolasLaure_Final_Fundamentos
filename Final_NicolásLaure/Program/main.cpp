@@ -196,6 +196,7 @@ void GameUpdate(GameData& gd)
 {
 	if (!gd.player.isAlive)
 	{
+		gd.playerHasWon = false;
 		gd.scene = Scenes::GameOver;
 		return;
 	}
