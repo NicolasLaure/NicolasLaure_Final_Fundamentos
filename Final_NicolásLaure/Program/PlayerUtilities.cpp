@@ -2,7 +2,7 @@
 
 void PlayerAttack(GameData& gd)
 {
-	if (gd.actualMap.mapType == MapType::OverWorld || gd.actualMap.mapType == MapType::Mountain)
+	if (gd.actualMap.mapType == MapType::OverWorld || gd.actualMap.mapType == MapType::Mountain || gd.actualMap.mapType == MapType::CastleEntrance)
 		SetConsoleTextAttribute(gd.handle, 233);
 	else
 		SetConsoleTextAttribute(gd.handle, 9);
@@ -48,7 +48,7 @@ void PlayerAttack(GameData& gd)
 
 void SwordUpdate(GameData& gd)
 {
-	if (gd.actualMap.mapType == MapType::OverWorld || gd.actualMap.mapType == MapType::Mountain)
+	if (gd.actualMap.mapType == MapType::OverWorld || gd.actualMap.mapType == MapType::Mountain || gd.actualMap.mapType == MapType::CastleEntrance)
 		SetConsoleTextAttribute(gd.handle, 233);
 	else
 		SetConsoleTextAttribute(gd.handle, 9);
