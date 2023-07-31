@@ -33,7 +33,7 @@ enum class Scenes
 	Menu,
 	Game,
 	GameOver,
-	End
+	GameQuit
 };
 
 struct TileMap

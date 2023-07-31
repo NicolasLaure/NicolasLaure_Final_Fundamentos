@@ -21,7 +21,7 @@ void GameLoop(GameData& gd)
 
 		switch (gd.scene)
 		{
-		case Scenes::End:
+		case Scenes::GameQuit:
 			break;
 		case Scenes::Menu:
 			Menu(gd);
@@ -36,7 +36,7 @@ void GameLoop(GameData& gd)
 			break;
 		}
 
-	} while (gd.scene != Scenes::End);
+	} while (gd.scene != Scenes::GameQuit);
 }
 
 void Menu(GameData& gd)
@@ -71,7 +71,7 @@ void MenuUpdate(GameData& gd)
 		else if (response == '2')
 			Rules(gd);
 		else if (response == '3')
-			gd.scene = Scenes::End;
+			gd.scene = Scenes::GameQuit;
 	}
 }
 void MenuDraw(GameData& gd)
@@ -201,6 +201,13 @@ void GameUpdate(GameData& gd)
 	}
 	gd.playerLivesPrevFrame = gd.player.healthPoints;
 
+	if (gd.actualMap.name == MapNames::HyruleCastle && gd.player.position.y <= 19)
+	{
+		gd.playerHasWon = true;
+		gd.scene = Scenes::GameOver;
+		return;
+	}
+
 	if (clock() >= gd.player.timer)
 		gd.player.canTakeDamage = true;
 
@@ -222,6 +229,10 @@ void GameUpdate(GameData& gd)
 			else if (gd.mapOfTiles[y - 1][x].isCaveEntrance)
 			{
 				MapChange(gd, true);
+			}
+			else if (gd.mapOfTiles[y - 1][x].isCastleEntrance && gd.player.hasTriforce)
+			{
+				MapChange(gd, Directions::North);
 			}
 			else if (gd.mapOfTiles[y - 1][x].isEndOfMap)
 			{
@@ -335,33 +346,70 @@ void GameOverDraw(GameData& gd)
 {
 	if (!gd.isArtPrinted)
 	{
-		SetConsoleTextAttribute(gd.handle, 7);
 		system("cls");
-		string gameOverText[7] = {
-			R"( ######      ###    ##     ## ########  #######  ##     ## ######## ######## )",
-			R"(##    ##    ## ##   ###   ### ##       ##     ## ##     ## ##       ##     ## )",
-			R"(##         ##   ##  #### #### ##       ##     ## ##     ## ##       ##     ## )",
-			R"(##   #### ##     ## ## ### ## ######   ##     ## ##     ## ######   ########  )",
-			R"(##    ##  ######### ##     ## ##       ##     ##  ##   ##  ##       ##   ##   )",
-			R"(##    ##  ##     ## ##     ## ##       ##     ##   ## ##   ##       ##    ##  )",
-			R"( ######   ##     ## ##     ## ########  #######     ###    ######## ##     ## )"
-		};
 		COORD coordinates;
-		coordinates.X = gd.width / 2 - (78 / 2);
-		coordinates.Y = gd.height / 4;
-		for (int i = 0; i < 7; i++)
+
+		if (!gd.playerHasWon)
 		{
-			SetConsoleTextAttribute(gd.handle, 4);
+			SetConsoleTextAttribute(gd.handle, 7);
+			string gameOverText[7] = {
+				R"( ######      ###    ##     ## ########  #######  ##     ## ######## ######## )",
+				R"(##    ##    ## ##   ###   ### ##       ##     ## ##     ## ##       ##     ## )",
+				R"(##         ##   ##  #### #### ##       ##     ## ##     ## ##       ##     ## )",
+				R"(##   #### ##     ## ## ### ## ######   ##     ## ##     ## ######   ########  )",
+				R"(##    ##  ######### ##     ## ##       ##     ##  ##   ##  ##       ##   ##   )",
+				R"(##    ##  ##     ## ##     ## ##       ##     ##   ## ##   ##       ##    ##  )",
+				R"( ######   ##     ## ##     ## ########  #######     ###    ######## ##     ## )"
+			};
+			coordinates.X = gd.width / 2 - (78 / 2);
+			coordinates.Y = gd.height / 4;
+			for (int i = 0; i < 7; i++)
+			{
+				SetConsoleTextAttribute(gd.handle, 4);
+				SetConsoleCursorPosition(gd.handle, coordinates);
+				cout << gameOverText[i];
+				coordinates.Y++;
+			}
+			SetConsoleTextAttribute(gd.handle, 7);
+			coordinates.X = gd.width / 2 - (37 / 2);
+			coordinates.Y += 5;
 			SetConsoleCursorPosition(gd.handle, coordinates);
-			cout << gameOverText[i];
-			coordinates.Y++;
+			cout << "Press Any Key To Return To Main Menu";
+			gd.isArtPrinted = true;
 		}
-		SetConsoleTextAttribute(gd.handle, 7);
-		coordinates.X = gd.width / 2 - (37 / 2);
-		coordinates.Y += 5;
-		SetConsoleCursorPosition(gd.handle, coordinates);
-		cout << "Press Any Key To Return To Main Menu";
-		gd.isArtPrinted = true;
+		else
+		{
+			string gameOverText[7] = {
+				R"(######## ##     ## ########        ######## ##    ## ########  )",
+				R"(	  ##    ##     ## ##              ##       ###   ## ##     ## )",
+				R"(	  ##    ##     ## ##              ##       ####  ## ##     ## )",
+				R"(   ##    ######### ######          ######   ## ## ## ##     ## )",
+				R"(	  ##    ##     ## ##              ##       ##  #### ##     ## )",
+				R"(	  ##    ##     ## ##              ##       ##   ### ##     ## )",
+				R"(	  ##    ##     ## ########        ######## ##    ## ########  )"
+			};
+
+			coordinates.X = gd.width / 2 - (64 / 2);
+			coordinates.Y = gd.height / 4;
+			for (int i = 0; i < 7; i++)
+			{
+				SetConsoleTextAttribute(gd.handle, 4);
+				SetConsoleCursorPosition(gd.handle, coordinates);
+				cout << gameOverText[i];
+				coordinates.Y++;
+			}
+
+			SetConsoleTextAttribute(gd.handle, 7);
+			coordinates.X = gd.width / 2 - (19 / 2);
+			coordinates.Y += 5;
+			SetConsoleCursorPosition(gd.handle, coordinates);
+			cout << "YOU   ARE   GREAT!";
+			coordinates.Y += 5;
+			coordinates.X = gd.width / 2 - (37 / 2);
+			SetConsoleCursorPosition(gd.handle, coordinates);
+			cout << "Press Any Key To Return To Main Menu";
+			gd.isArtPrinted = true;
+		}
 	}
 }
 
@@ -691,6 +739,8 @@ void PrintMap(GameData& gd, Map map, int MAP_HEIGHT)
 						else
 							SetConsoleTextAttribute(gd.handle, 6);
 					}
+					else if (map.mapType == MapType::CastleEntrance)
+						SetConsoleTextAttribute(gd.handle, 128);
 				}
 			}
 			else
@@ -699,6 +749,8 @@ void PrintMap(GameData& gd, Map map, int MAP_HEIGHT)
 					SetConsoleTextAttribute(gd.handle, 238);
 				else if (map.mapType == MapType::Cave)
 					SetConsoleTextAttribute(gd.handle, 7);
+				else if (map.mapType == MapType::CastleEntrance)
+					SetConsoleTextAttribute(gd.handle, 128);
 			}
 
 			if (gd.mapOfTiles[i + 4][j + 2].isItem)
@@ -890,11 +942,11 @@ void MapsSetup(GameData& gd, Map maps[], int mapQty, int mapSize)
 			R"(.,#@,,#&           &.##@,.,#@,,#&##@&.##@,.,#@,,#&##@&.##@,.,#@,,#&##@&.#@,.,#@,,#&##@&.##@,)",
 			R"(.###@%#&           &####@.###@%#&##@&####@.###@%#&##@&####@.###@%#&##@&###@.###@%#&##@&####@)",
 			R"(#@###%#&           &####@#@###%#&##@&####@#@###%#&##@&####@#@###%#&##@&###@#@###%#&##@&####@)",
-			R"(#%##@&                                                                           ,##@&.###@.)",
-			R"(.,#@,,                                                                           #@##@.####@)",
-			R"(#%##@&                                                                           #@##@.####@)",
-			R"(.,#@,,                                                     &##&@                %&#/&&.&##&@)",
-			R"(.###@%                                                      #&#,                    ,#&##%#,)",
+			R"(#%##@&                                                                            ##@&.###@.)",
+			R"(.,#@,,                                                                             ##@.####@)",
+			R"(#%##@&                                                                              #@.####@)",
+			R"(.,#@,,                                                     &##&@                     &.&##&@)",
+			R"(.###@%                                                      #&#,                     #&##%#,)",
 			R"(#%##@&      ####@                   ###@       ####@                                   @@@@#)",
 			R"(.,#@,,      ####@                  #####       ####@                                   @#@#.)",
 			R"(.###@%                                                     ###@                        @@@@#)",
@@ -1100,6 +1152,37 @@ void MapsSetup(GameData& gd, Map maps[], int mapQty, int mapSize)
 			};
 			maps[i].mapType = MapType::CastleEntrance;
 			break;
+		case MapNames::HyruleCastle:
+			maps[i].name = MapNames::HyruleCastle;
+			maps[i].mapGraphic = new string[25]{
+			R"(#@##&#&%#&#&%#&#&%#&%&%#&%&%#&%&%#&%&%#@##&&%#&#&%#&&#&%#&%&%#&%&%#&%&%#&%&%#@##&#&%#&#&%%&%)",
+			R"(#@##@#*##@#*##@#*##@#*##@#*##@#*##@#*##@##@###/\@#*@@#*##@#*##@#*##@#*##@#*##@##@#*##@#*##*#)",
+			R"(#@##&#&%#&#&%#&#&%#&%&%#&%&%#&%&%#&%&%#@##&&#/__\&#&&#&%#&%&%#&%&%#&%&%#&%&%#@##&#&%#&#&%%&%)",
+			R"(#@##@#*##@#*##@#*##@#*##@#*##@#*##@#*##@##@#/\--/\#@@#*##@#*##@#*##@#*##@#*##@##@#*##@#*##*#)",
+			R"(#@##&#&%#&#&%#&#&%#&%&%#&%&%#&%&%#&%&%#@##&/__\/__\&&#&%#&%&%#&%&%#&%&%#&%&%#@##&#&%#&#&%%&%)",
+			R"(#@##@#*##@                                                                        *##@#*##*#)",
+			R"(#@##&#&%#&         Thanks  for  opening  the  gate  Link  You  saved  me!         &%#&#&%%&%)",
+			R"(#@##@#*##@                                                                        *##@#*##*#)",
+			R"(##@#####%@                                                                        @##&#&%%&%)",
+			R"(#&#&&#&#&&                                    A                                   &*#@#*##*#)",
+			R"(#@#*##@#*#                                   ZZZ                                  ##@####@##)",
+			R"(#&#&&#&#&&                                   / \                                  #&%&%#&%&%)",
+			R"(#@#*##@#*#                                                                        #@#*##@#*#)",
+			R"(#&#&&#&#&&                                                                        #&%&%#&%&%)",
+			R"(#@#*##@#*#                                                                        #@#*##@#*#)",
+			R"(#&#&&#&#&&          15                                                            #&%&%#&%&%)",
+			R"(#@#*##@#*#                                                                        ##@####@##)",
+			R"(#&#&&#&#&&                                                                        #&%&%#&%&%)",
+			R"(#@#*##@#*#                                                                        #@#*##@#*#)",
+			R"(#&#&&#&#&&                                                                        #&%&%#&%&%)",
+			R"(#@#*##@#*#                                                                        #@#*##@#*#)",
+			R"(#&#&&#&#&&                                                                        #&%&%#&%&%)",
+			R"(#@#*##@#*###@####@####@####@####@####@####          #####@####@####@###@#*##@#*#@#@####@####)",
+			R"(#&#&&#&#&&#&#&&#&#&&#&#&&#&#&&#&#&&#&#&&##          &&%#&#&%#&%&%#&%&%#&%&%#&%&%@##&#&&#&#&&)",
+			R"(#@#*##@#*##@#*##@#*##@#*##@#*##@#*##@#*###          @@##@#*##@#*##@#*##@#*##@#*#@#*##@#*##@#)"
+			};
+			maps[i].mapType = MapType::Castle;
+			break;
 		default:
 			break;
 		}
@@ -1116,39 +1199,6 @@ void MapChange(GameData& gd, Directions dir)
 			gd.actualMap = gd.maps[static_cast<int>(MapNames::Mountain1)];
 			gd.storedPosition = gd.player.position;
 			gd.player.position = { 2, 17 };
-
-			Enemy spider[3];
-			for (int i = 0; i < 3; i++)
-			{
-				spider[i].HealthPoints = 1;
-				spider[i].isActiveEnemy = true;
-				spider[i].previousPosition = { 3, 20 };
-				spider[i].enemyType = EnemyType::Spider;
-				spider[i].isActiveEnemy = true;
-				spider[i].isAlive = true;
-				if (i == 0)
-					spider[i].position = { 3, 20 };
-				else if (i == 1)
-					spider[i].position = { 17,10 };
-				else
-					spider[i].position = { 50,18 };
-			}
-			Octorok octorok;
-			octorok.HealthPoints = 1;
-			octorok.rotationCoolDown = 150;
-			octorok.isActiveEnemy = true;
-			octorok.previousPosition = { 5, 20 };
-			octorok.position = { 5, 20 };
-			octorok.enemyType = EnemyType::Octorok;
-			octorok.isActiveEnemy = true;
-			octorok.isAlive = true;
-			octorok.isMoving = false;
-			gd.enemies[0] = spider[0];
-			gd.enemies[1] = spider[1];
-			gd.enemies[2] = spider[2];
-			gd.enemies[3] = octorok;
-
-			gd.actualEnemies = 4;
 		}
 		else if (dir == Directions::North)
 		{
@@ -1227,13 +1277,99 @@ void MapChange(GameData& gd, Directions dir)
 			gd.actualMap = gd.maps[static_cast<int>(MapNames::Mountain1)];
 			gd.player.position = { 93, 17 };
 		}
+		else if (dir == Directions::North)
+		{
+			gd.actualMap = gd.maps[static_cast<int>(MapNames::HyruleCastle)];
+			gd.player.position = { 48, 28 };
+		}
 		break;
 	default:
 		break;
 	}
+
+	for (int i = 0; i < gd.actualEnemies; i++)
+	{
+		gd.enemies[i] = gd.deadEnemy;
+	}
+
+	switch (gd.actualMap.name)
+	{
+	case MapNames::Mountain1:
+	case MapNames::HyruleField:
+	case MapNames::WesternRiver:
+	case MapNames::KokiriForest:
+	{
+		int counter = 0;
+
+		const int spidersQty = 5;
+		Enemy spider[spidersQty];
+		for (int i = 0; i < spidersQty; i++)
+		{
+			spider[i].HealthPoints = 1;
+			spider[i].isActiveEnemy = true;
+			spider[i].enemyType = EnemyType::Spider;
+			spider[i].isAlive = true;
+
+			switch (i)
+			{
+			case 0:
+				spider[i].position = { 14, 20 };
+				break;
+			case 1:
+				if (gd.actualMap.name == MapNames::Mountain1)
+					spider[i].position = { 45, 12 };
+				else
+					spider[i].position = { 15, 12 };
+				break;
+			case 2:
+				spider[i].position = { 76, 14 };
+				break;
+			case 3:
+				spider[i].position = { 65, 23 };
+				break;
+			case 4:
+				spider[i].position = { 80, 22 };
+				break;
+			default:
+				break;
+			}
+			spider[i].previousPosition = spider[i].position;
+			gd.enemies[counter] = spider[i];
+			counter++;
+		}
+
+		Octorok octorok;
+		octorok.HealthPoints = 1;
+		octorok.isActiveEnemy = true;
+		octorok.enemyType = EnemyType::Octorok;
+		octorok.isAlive = true;
+
+		if (gd.actualMap.name == MapNames::Mountain1)
+			octorok.position = { 5, 20 };
+		else if (gd.actualMap.name == MapNames::HyruleField)
+			octorok.position = { 60, 20 };
+		else
+			octorok.position = { 80, 12 };
+
+
+		octorok.previousPosition = octorok.position;
+		gd.enemies[counter] = octorok;
+
+		gd.actualEnemies = spidersQty + 1;
+	}
+	break;
+	default:
+		break;
+	}
+
 }
 void MapChange(GameData& gd, bool isCave)
 {
+	for (int i = 0; i < gd.actualEnemies; i++)
+	{
+		gd.enemies[i] = gd.deadEnemy;
+	}
+
 	switch (gd.actualMap.name)
 	{
 	case MapNames::StartValley:

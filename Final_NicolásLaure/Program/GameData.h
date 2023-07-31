@@ -29,6 +29,7 @@ struct GameData
 	int height;
 
 	// Game
+	bool playerHasWon = false;
 	bool isMenuFirstPhase = true;
 	bool firstScreen = true;
 
