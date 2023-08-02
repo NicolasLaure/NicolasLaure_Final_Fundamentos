@@ -140,7 +140,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="EnemyUtilities.cpp" />
+    <ClCompile Include="Game.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MapHandler.cpp" />
     <ClCompile Include="PlayerUtilities.cpp" />
     <ClCompile Include="Utilities.cpp" />
   </ItemGroup>
@@ -149,6 +151,7 @@
     <ClInclude Include="EnemyUtilities.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="GameData.h" />
+    <ClInclude Include="MapHandler.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="PlayerUtilities.h" />
     <ClInclude Include="Utilities.h" />

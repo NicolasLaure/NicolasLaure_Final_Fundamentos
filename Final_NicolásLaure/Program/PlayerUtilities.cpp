@@ -252,3 +252,92 @@ void TakeItem(GameData& gd)
 		SetConsoleTextAttribute(gd.handle, 7);
 	}
 }
+
+void PrintPlayer(GameData& gd)
+{
+	if (gd.actualMap.mapType == MapType::OverWorld || gd.actualMap.mapType == MapType::Mountain || gd.actualMap.mapType == MapType::CastleEntrance)
+		SetConsoleTextAttribute(gd.handle, 233);
+	else
+		SetConsoleTextAttribute(gd.handle, 9);
+
+	SetConsoleCursorPosition(gd.handle, { static_cast<short>(gd.player.position.x), static_cast<short>(gd.player.position.y) });
+	cout << gd.player.graphic;
+	switch (gd.player.direction)
+	{
+	case Directions::North:
+		if (!gd.mapOfTiles[gd.player.position.y - 1][gd.player.position.x].hasCollision)
+		{
+			SetConsoleCursorPosition(gd.handle, { static_cast<short>(gd.player.position.x), static_cast<short>(gd.player.position.y - 1) });
+			cout << '.';
+		}
+		break;
+	case Directions::South:
+		if (!gd.mapOfTiles[gd.player.position.y + 1][gd.player.position.x].hasCollision)
+		{
+			SetConsoleCursorPosition(gd.handle, { static_cast<short>(gd.player.position.x), static_cast<short>(gd.player.position.y + 1) });
+			cout << '.';
+		}
+		break;
+	case Directions::East:
+		if (!gd.mapOfTiles[gd.player.position.y][gd.player.position.x + 1].hasCollision)
+		{
+			SetConsoleCursorPosition(gd.handle, { static_cast<short>(gd.player.position.x + 1), static_cast<short>(gd.player.position.y) });
+			cout << '.';
+		}
+		break;
+	case Directions::West:
+		if (!gd.mapOfTiles[gd.player.position.y][gd.player.position.x - 1].hasCollision)
+		{
+			SetConsoleCursorPosition(gd.handle, { static_cast<short>(gd.player.position.x - 1), static_cast<short>(gd.player.position.y) });
+			cout << '.';
+		}
+		break;
+	default:
+		break;
+	}
+	SetConsoleTextAttribute(gd.handle, 7);
+}
+
+void ClearPreviousPlayerPos(GameData& gd)
+{
+	if (gd.actualMap.mapType == MapType::OverWorld || gd.actualMap.mapType == MapType::Mountain || gd.actualMap.mapType == MapType::CastleEntrance)
+		SetConsoleTextAttribute(gd.handle, 233);
+	else
+		SetConsoleTextAttribute(gd.handle, 7);
+	SetConsoleCursorPosition(gd.handle, { static_cast<short>(gd.player.position.x), static_cast<short>(gd.player.position.y) });
+	cout << ' ';
+	switch (gd.player.direction)
+	{
+	case Directions::North:
+		if (!gd.mapOfTiles[gd.player.position.y - 1][gd.player.position.x].hasCollision)
+		{
+			SetConsoleCursorPosition(gd.handle, { static_cast<short>(gd.player.position.x), static_cast<short>(gd.player.position.y - 1) });
+			cout << ' ';
+		}
+		break;
+	case Directions::South:
+		if (!gd.mapOfTiles[gd.player.position.y + 1][gd.player.position.x].hasCollision)
+		{
+			SetConsoleCursorPosition(gd.handle, { static_cast<short>(gd.player.position.x), static_cast<short>(gd.player.position.y + 1) });
+			cout << ' ';
+		}
+		break;
+	case Directions::East:
+		if (!gd.mapOfTiles[gd.player.position.y][gd.player.position.x + 1].hasCollision)
+		{
+			SetConsoleCursorPosition(gd.handle, { static_cast<short>(gd.player.position.x + 1), static_cast<short>(gd.player.position.y) });
+			cout << ' ';
+		}
+		break;
+	case Directions::West:
+		if (!gd.mapOfTiles[gd.player.position.y][gd.player.position.x - 1].hasCollision)
+		{
+			SetConsoleCursorPosition(gd.handle, { static_cast<short>(gd.player.position.x - 1), static_cast<short>(gd.player.position.y) });
+			cout << ' ';
+		}
+		break;
+	default:
+		break;
+	}
+	SetConsoleTextAttribute(gd.handle, 7);
+}

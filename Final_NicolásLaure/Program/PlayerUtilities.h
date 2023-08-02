@@ -9,3 +9,7 @@ void RangedAttackExplosion(GameData& gd, Vector2 lastAttackedPosition);
 void CleanExplosion(GameData gd, Vector2 lastAttackedPosition);
 
 void TakeItem(GameData& gd);
+
+
+void PrintPlayer(GameData& gd);
+void ClearPreviousPlayerPos(GameData& gd);
