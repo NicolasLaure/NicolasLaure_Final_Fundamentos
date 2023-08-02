@@ -152,14 +152,16 @@ void Rules(GameData& gd)
 {
 	system("cls");
 	gd.isArtPrinted = false;
-	SetConsoleCursorPosition(gd.handle, { 5,7 });
+	SetConsoleCursorPosition(gd.handle, { 5,3 });
 	cout << "Princess Zelda was kidnapped at Hyrule Castle, you have to rescue her!!";
-	SetConsoleCursorPosition(gd.handle, { 5,13 });
+	SetConsoleCursorPosition(gd.handle, { 5,8 });
+	cout << "Your character is the blue letter C, the little point shows you where you are looking at";
+	SetConsoleCursorPosition(gd.handle, { 5,14 });
 	cout << "Use WASD keys to move, once you got a sword you can attack with 'X' key";
 	SetConsoleCursorPosition(gd.handle, { 5,19 });
 	cout << "You are Hyrule's only hope Link";
 
-	SetConsoleCursorPosition(gd.handle, { 5,25 });
+	SetConsoleCursorPosition(gd.handle, { 5,24 });
 	system("pause");
 }
 void Game(GameData& gd)
