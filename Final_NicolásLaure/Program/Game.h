@@ -24,7 +24,7 @@ void EnemyUpdate(GameData& gd);
 void EnemyDraw(GameData& gd);
 
 //utilities
-void Initialize(GameData gd);
+void Initialize(GameData& gd);
 void SetConsoleFontSize(int size);
-void PrintUpperBar(GameData gd);
-void CleanUpperBar(GameData gd);
+void PrintUpperBar(GameData& gd);
+void CleanUpperBar(GameData& gd);

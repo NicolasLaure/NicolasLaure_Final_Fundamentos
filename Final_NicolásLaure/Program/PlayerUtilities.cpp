@@ -159,7 +159,7 @@ void RangedAttackExplosion(GameData& gd, Vector2 lastAttackedPosition)
 	}
 	CleanExplosion(gd, lastAttackedPosition);
 }
-void CleanExplosion(GameData gd, Vector2 lastAttackedPosition)
+void CleanExplosion(GameData& gd, Vector2 lastAttackedPosition)
 {
 	float time;
 	float timer;

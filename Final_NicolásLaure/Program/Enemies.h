@@ -31,6 +31,7 @@ struct Enemy
 	int HealthPoints{};
 	bool isAlive{ false };
 	Vector2 position{};
+	Vector2 newPos{};
 	Vector2 previousPosition{};
 	bool isActiveEnemy{ false };
 	bool isMoving{ false };
@@ -42,8 +43,13 @@ struct Enemy
 	int stateChangeTime{};
 	int timer{ 0 };
 
+	//octorok
 	int rotationCoolDown{ 150 };
 	Rock rock{};
+	Directions dir{ Directions::North };
+	int rotationTimer = 0;
+	int qtyOfMoves{ 0 };
+	bool hasShooted{ false };
 
 	void TakeDamage(int damage)
 	{
@@ -54,10 +60,6 @@ struct Enemy
 };
 struct Octorok : Enemy
 {
-	Directions dir{ Directions::North };
-	int rotationTimer = 0;
-	int qtyOfMoves{ 0 };
-	bool hasShooted{ false };
 	void Move(TileMap mapOfTiles[32][97])
 	{
 		previousPosition = position;
@@ -167,7 +169,6 @@ struct Octorok : Enemy
 
 struct Spider : Enemy
 {
-	Vector2 newPos{};
 	void Move(TileMap mapOfTiles[32][97])
 	{
 		previousPosition = position;

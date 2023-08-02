@@ -666,7 +666,7 @@ void MapChange(GameData& gd, Directions dir)
 			counter++;
 		}
 
-		Octorok octorok;
+		Enemy octorok;
 		octorok.HealthPoints = 1;
 		octorok.isActiveEnemy = true;
 		octorok.enemyType = EnemyType::Octorok;
@@ -678,7 +678,6 @@ void MapChange(GameData& gd, Directions dir)
 			octorok.position = { 60, 20 };
 		else
 			octorok.position = { 80, 12 };
-
 
 		octorok.previousPosition = octorok.position;
 		gd.enemies[counter] = octorok;

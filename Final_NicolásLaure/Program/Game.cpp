@@ -164,6 +164,7 @@ void Rules(GameData& gd)
 	SetConsoleCursorPosition(gd.handle, { 5,24 });
 	system("pause");
 }
+
 void Game(GameData& gd)
 {
 	if (gd.enteredNewScene)
@@ -172,7 +173,6 @@ void Game(GameData& gd)
 	GameUpdate(gd);
 	GameDraw(gd);
 }
-
 void GameStart(GameData& gd)
 {
 	gd.isArtPrinted = false;
@@ -189,7 +189,6 @@ void GameStart(GameData& gd)
 		gd.enemies[i] = gd.deadEnemy;
 	}
 }
-
 void GameUpdate(GameData& gd)
 {
 	if (!gd.player.isAlive)
@@ -300,7 +299,7 @@ void GameUpdate(GameData& gd)
 
 	for (int i = 0; i < gd.MAX_ENEMIES; i++)
 	{
-		if (gd.enemies[i].position.x == gd.player.position.x && gd.enemies[i].position.y == gd.player.position.y && gd.player.canTakeDamage)
+		if (gd.enemies[i].isAlive && gd.enemies[i].position.x == gd.player.position.x && gd.enemies[i].position.y == gd.player.position.y && gd.player.canTakeDamage)
 			gd.player.TakeDamage();
 	}
 
@@ -331,7 +330,6 @@ void GameOver(GameData& gd)
 	GameOverUpdate(gd);
 	GameOverDraw(gd);
 }
-
 void GameOverStart(GameData& gd)
 {
 	gd.isArtPrinted = false;
@@ -417,9 +415,6 @@ void EnemyUpdate(GameData& gd)
 	int randomNum = 0;
 	for (int i = 0; i < gd.actualEnemies; i++)
 	{
-		if (!gd.enemies[i].isAlive)
-			gd.enemies[i] = gd.deadEnemy;
-
 		if (gd.enemies[i].isActiveEnemy && gd.enemies[i].isAlive)
 		{
 			gd.enemies[i].hasChangedOnLastFrame = false;
@@ -447,12 +442,12 @@ void EnemyUpdate(GameData& gd)
 					switch (gd.enemies[i].state)
 					{
 					case EnemyStates::Move:
-						static_cast<Octorok&>(gd.enemies[i]).qtyOfMoves = rand() % 3 + 1;
+						gd.enemies[i].qtyOfMoves = rand() % 3 + 1;
 						gd.enemies[i].isMoving = true;
 						gd.enemies[i].moveTimer = clock() + gd.enemies[i].moveCoolDown;
 						break;
 					case EnemyStates::Attack:
-						if (!static_cast<Octorok&>(gd.enemies[i]).hasShooted)
+						if (!gd.enemies[i].hasShooted)
 						{
 							static_cast<Octorok&>(gd.enemies[i]).Shoot(gd.mapOfTiles);
 						}
@@ -461,7 +456,7 @@ void EnemyUpdate(GameData& gd)
 						if (clock() >= static_cast<Octorok&>(gd.enemies[i]).rotationTimer)
 						{
 							static_cast<Octorok&>(gd.enemies[i]).Rotate();
-							static_cast<Octorok&>(gd.enemies[i]).rotationTimer = clock() + 150;
+							gd.enemies[i].rotationTimer = clock() + 150;
 						}
 						break;
 					default:
@@ -474,20 +469,20 @@ void EnemyUpdate(GameData& gd)
 				if (gd.enemies[i].enemyType == EnemyType::Octorok)
 				{
 					static_cast<Octorok&>(gd.enemies[i]).Move(gd.mapOfTiles);
-					if (static_cast<Octorok&>(gd.enemies[i]).qtyOfMoves <= 0)
+					if (gd.enemies[i].qtyOfMoves <= 0)
 					{
 						gd.enemies[i].isMoving = false;
-						static_cast<Octorok&>(gd.enemies[i]).qtyOfMoves = 0;
+						gd.enemies[i].qtyOfMoves = 0;
 					}
 				}
 				gd.enemies[i].moveTimer = clock() + gd.enemies[i].moveCoolDown;
 			}
 		}
-		if (gd.enemies[i].enemyType == EnemyType::Octorok && static_cast<Octorok&>(gd.enemies[i]).hasShooted)
+		if (gd.enemies[i].enemyType == EnemyType::Octorok && gd.enemies[i].hasShooted)
 		{
 			if (clock() >= gd.enemies[i].rock.moveTimer)
 			{
-				RockUpdate(gd.enemies[i].rock, gd.mapOfTiles, static_cast<Octorok&>(gd.enemies[i]).hasShooted);
+				RockUpdate(gd.enemies[i].rock, gd.mapOfTiles, gd.enemies[i].hasShooted);
 				if (gd.player.position.x == gd.enemies[i].rock.position.x && gd.player.position.y == gd.enemies[i].rock.position.y)
 					gd.player.TakeDamage();
 				RockDraw(gd.enemies[i].rock, gd.actualMap.mapType, gd.handle);
@@ -514,7 +509,7 @@ void EnemyDraw(GameData& gd)
 				cout << "M";
 			else if (gd.enemies[i].enemyType == EnemyType::Octorok)
 			{
-				switch (static_cast<Octorok&>(gd.enemies[i]).dir)
+				switch (gd.enemies[i].dir)
 				{
 				case Directions::North:
 					cout << "V";

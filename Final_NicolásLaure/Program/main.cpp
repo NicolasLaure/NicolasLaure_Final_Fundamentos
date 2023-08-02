@@ -5,7 +5,7 @@ void main()
 	Play();
 }
 
-void Initialize(GameData gd)
+void Initialize(GameData& gd)
 {
 	SetConsoleFontSize(gd.ConsoleFontSize);
 
@@ -31,7 +31,7 @@ void SetConsoleFontSize(int size)
 	cfi.FontFamily = FF_ROMAN;
 	SetCurrentConsoleFontEx(handle, 0, &cfi);
 }
-void PrintUpperBar(GameData gd)
+void PrintUpperBar(GameData& gd)
 {
 	SetConsoleTextAttribute(gd.handle, 7);
 	SetConsoleCursorPosition(gd.handle, { 0,0 });
@@ -47,7 +47,7 @@ void PrintUpperBar(GameData gd)
 		cout << "<3 ";
 	}
 }
-void CleanUpperBar(GameData gd)
+void CleanUpperBar(GameData& gd)
 {
 	SetConsoleTextAttribute(gd.handle, 7);
 	SetConsoleCursorPosition(gd.handle, { 0,0 });
